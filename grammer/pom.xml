@@ -10,8 +10,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<target.jvm>1.8</target.jvm>
 		<antlr.version>4.8-1</antlr.version>
-		<antlr4test-maven-plugin.version>1.14</antlr4test-maven-plugin.version>
 		<junit.version>4.12</junit.version>
+		<antlr.build.target.dir>${project.basedir}/../target/</antlr.build.target.dir>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -21,7 +21,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<directory>${project.basedir}/../target/</directory>
+		<directory>${antlr.build.target.dir}</directory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
