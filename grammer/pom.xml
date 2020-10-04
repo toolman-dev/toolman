@@ -13,13 +13,7 @@
 		<junit.version>4.12</junit.version>
 		<antlr.build.target.dir>${project.basedir}/../target/</antlr.build.target.dir>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
-		</dependency>
-	</dependencies>
+	<dependencies></dependencies>
 	<build>
 		<directory>${antlr.build.target.dir}</directory>
 		<plugins>
