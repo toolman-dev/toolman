@@ -13,3 +13,4 @@ out/
 
 # CMake temp files
 build
+dist
