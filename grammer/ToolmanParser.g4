@@ -42,7 +42,7 @@ enumDecl:
 type_:
 	baseType
 	| Any
-	| arrayType
+	| listType
 	| mapType
 	| oneOfType
 	| identifierName;
@@ -50,7 +50,7 @@ type_:
 baseType: String | I32 | I64 | U32 | U64 | Float | Bool;
 
 // [SomeType]
-arrayType: OpenBracket elementType CloseBracket;
+listType: OpenBracket elementType CloseBracket;
 
 // {keyType: valueType}
 mapType: OpenBrace baseType Colon elementType CloseBrace;
@@ -96,7 +96,7 @@ keyword:
 	| U64
 	| Float;
 
-literal: baseLiteral | arrayLiteral | mapLiteral;
+literal: baseLiteral | listLiteral | mapLiteral;
 
 baseLiteral: BooleanLiteral | StringLiteral | numericLiteral;
 
@@ -113,11 +113,11 @@ numericLiteral:
 	| OctalIntegerLiteral
 	| BinaryIntegerLiteral;
 
-arrayLiteral: OpenBracket elementList? CloseBracket;
+listLiteral: OpenBracket elementList? CloseBracket;
 
-elementList: arrayElement (Comma arrayElement)*;
+elementList: listElement (Comma listElement)*;
 
-arrayElement: literal Comma?;
+listElement: literal Comma?;
 
 mapLiteral:
 	OpenBrace baseLiteral Colon literal (
