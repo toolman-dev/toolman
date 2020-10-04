@@ -1,7 +1,8 @@
 /**
  * A Toolman lexer grammar for ANTLR v4.
  * 
- * @author taoyu @author taowei
+ * @author taoyu
+ * @author taowei
  */
 lexer grammar ToolmanLexer;
 
