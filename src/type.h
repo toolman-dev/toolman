@@ -2,12 +2,13 @@
 #define TYPE_H
 
 #include <string>
-#include <iostream>
+
 namespace toolman {
 
 class Type {
     public:
         virtual void set_name(const std::string& name) { name_ = name; }
+        virtual void set_name(std::string&& name) { name_ = std::move(name); }
 
         virtual const std::string& get_name() const { return name_; }
 
