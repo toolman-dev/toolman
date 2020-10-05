@@ -24,5 +24,5 @@ class Type {
         std::string name_;
 };
 
-} // namespace v8
+} // namespace toolman
 #endif // TYPE_H
