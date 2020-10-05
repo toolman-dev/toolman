@@ -13,7 +13,7 @@
 
 namespace toolman {
 
-class StructField;
+class Field;
 class EnumField;
 
 template<typename F>
@@ -42,12 +42,16 @@ class CustomType : public Type {
     std::vector<F> fields_;
 };
 
-class StructType final : public CustomType<StructField> {
+class StructType final : public CustomType<Field> {
     bool is_struct() const override { return true; }
 };
 
 class EnumType final : public CustomType<EnumField> {
     bool is_enum() const override { return true; }
+};
+
+class OneofType final : public CustomType<EnumField> {
+    bool is_oneof() const override { return true; }
 };
 
 }  // namespace toolman

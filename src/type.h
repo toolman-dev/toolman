@@ -20,6 +20,8 @@ class Type {
 
     virtual bool is_struct() const { return false; }
 
+    virtual bool is_oneof() const { return false; }
+
     virtual bool is_list() const { return false; }
 
     virtual bool is_map() const { return false; }
