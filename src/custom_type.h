@@ -29,7 +29,8 @@ class CustomType : public Type {
         return true;
     }
 
-    std::optional<F> get_field_by_name(const std::string &field_name) const {
+    [[nodiscard]] std::optional<F> get_field_by_name(
+        const std::string &field_name) const {
         for (const auto &f : fields_) {
             if (f.get_name() == field_name) {
                 return std::make_optional(f);

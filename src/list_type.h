@@ -16,14 +16,15 @@ namespace toolman {
 class ListType final : public Type {
  public:
     ListType(const std::string &name, std::shared_ptr <Type> elem_type)
-            : Type(name), elem_type_(elem_type) {}
+            : Type(name), elem_type_(std::move(elem_type)) {}
 
     ListType(std::string &&name, std::shared_ptr <Type> elem_type)
-            : Type(std::move(name)), elem_type_(elem_type) {}
+            : Type(std::move(name)), elem_type_(std::move(elem_type)) {}
 
-    const std::shared_ptr <Type>& get_elem_type() const { return elem_type_; }
+    [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
+    { return elem_type_; }
 
-    bool is_list() const override { return true; }
+    [[nodiscard]] bool is_list() const override { return true; }
 
  private:
     std::shared_ptr <Type> elem_type_;

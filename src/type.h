@@ -12,17 +12,17 @@ namespace toolman {
 
 class Type {
  public:
-    virtual const std::string &get_name() const { return name_; }
+    [[nodiscard]] virtual const std::string &get_name() const { return name_; }
 
-    virtual bool is_primitive() const { return false; }
+    [[nodiscard]] virtual bool is_primitive() const { return false; }
 
-    virtual bool is_enum() const { return false; }
+    [[nodiscard]] virtual bool is_enum() const { return false; }
 
-    virtual bool is_struct() const { return false; }
+    [[nodiscard]] virtual bool is_struct() const { return false; }
 
-    virtual bool is_list() const { return false; }
+    [[nodiscard]] virtual bool is_list() const { return false; }
 
-    virtual bool is_map() const { return false; }
+    [[nodiscard]] virtual bool is_map() const { return false; }
 
  protected:
     explicit Type(const std::string &name) : name_(name) {}

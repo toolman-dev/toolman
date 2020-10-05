@@ -20,9 +20,9 @@ class EnumField final {
     EnumField(std::string &&name, int value)
             : name_(std::move(name)), value_(value) {}
 
-    const std::string &get_name() const { return name_; }
+    [[nodiscard]] const std::string &get_name() const { return name_; }
 
-    int get_value() const { return value_; }
+    [[nodiscard]] int get_value() const { return value_; }
 
  private:
     std::string name_;

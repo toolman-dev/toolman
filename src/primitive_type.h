@@ -30,19 +30,21 @@ class PrimitiveType final : public Type {
     PrimitiveType(std::string &&name, TypeKind type_kind)
             : Type(std::move(name)), type_kind_(type_kind) {}
 
-    bool is_primitive() const override { return true; }
+    [[nodiscard]] bool is_primitive() const override { return true; }
 
-    bool is_i32() const { return type_kind_ == TypeKind::I32; }
+    [[nodiscard]] bool is_i32() const { return type_kind_ == TypeKind::I32; }
 
-    bool is_u32() const { return type_kind_ == TypeKind::U32; }
+    [[nodiscard]] bool is_u32() const { return type_kind_ == TypeKind::U32; }
 
-    bool is_i64() const { return type_kind_ == TypeKind::I64; }
+    [[nodiscard]] bool is_i64() const { return type_kind_ == TypeKind::I64; }
 
-    bool is_u64() const { return type_kind_ == TypeKind::U64; }
+    [[nodiscard]] bool is_u64() const { return type_kind_ == TypeKind::U64; }
 
-    bool is_float() const { return type_kind_ == TypeKind::Float; }
+    [[nodiscard]] bool is_float() const
+        { return type_kind_ == TypeKind::Float; }
 
-    bool is_string() const { return type_kind_ == TypeKind::String; }
+    [[nodiscard]] bool is_string() const
+        { return type_kind_ == TypeKind::String; }
 
  private:
     TypeKind type_kind_;
