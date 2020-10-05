@@ -15,7 +15,7 @@
 # add_executable(main main.cpp ${ANTLR4_CXX_OUTPUTS})
 #
 
-set (ANTLR4_OUTPUTS_DIR "${PROJECT_BINARY_DIR}/mvn_target/generated-sources/antlr4")
+set (ANTLR4_OUTPUTS_DIR ${PROJECT_BINARY_DIR}/mvn_target/generated-sources/antlr4)
 
 if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR})
     find_package(Java QUIET COMPONENTS Runtime)
@@ -23,7 +23,7 @@ if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR})
     find_package(Maven REQUIRED)
 
     execute_process(
-        COMMAND ${Maven_EXECUTABLE} -f "${PROJECT_SOURCE_DIR}/grammer/pom.xml" antlr4:antlr4 "-Dantlr.build.target.dir=${PROJECT_BINARY_DIR}/mvn_target"
+        COMMAND ${Maven_EXECUTABLE} -f '${PROJECT_SOURCE_DIR}/grammer/pom.xml' antlr4:antlr4 '-Dantlr.build.target.dir=${PROJECT_BINARY_DIR}/mvn_target'
         OUTPUT_VARIABLE ANTLR_MVN_OUTPUT
         ERROR_VARIABLE ANTLR_MVN_ERROR
         RESULT_VARIABLE ANTLR_MVN_RESULT
@@ -37,5 +37,5 @@ if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR})
 
 endif()
 
-file(GLOB ANTLR4_CXX_OUTPUTS "${ANTLR4_OUTPUTS_DIR}/*.h" "${ANTLR4_OUTPUTS_DIR}/*.cpp")
-file(GLOB ANTLR4_OUTPUTS "${ANTLR4_OUTPUTS_DIR}/*.tokens" "${ANTLR4_OUTPUTS_DIR}/*.interp")
+file(GLOB ANTLR4_CXX_OUTPUTS ${ANTLR4_OUTPUTS_DIR}/*.h ${ANTLR4_OUTPUTS_DIR}/*.cpp)
+file(GLOB ANTLR4_OUTPUTS ${ANTLR4_OUTPUTS_DIR}/*.tokens ${ANTLR4_OUTPUTS_DIR}/*.interp)
