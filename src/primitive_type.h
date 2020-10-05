@@ -32,6 +32,8 @@ class PrimitiveType final : public Type {
 
     [[nodiscard]] bool is_primitive() const override { return true; }
 
+    [[nodiscard]] bool is_bool() const { return type_kind_ == TypeKind::Bool; }
+
     [[nodiscard]] bool is_i32() const { return type_kind_ == TypeKind::I32; }
 
     [[nodiscard]] bool is_u32() const { return type_kind_ == TypeKind::U32; }
