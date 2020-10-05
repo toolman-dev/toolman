@@ -24,6 +24,8 @@ class Type {
 
     [[nodiscard]] virtual bool is_map() const { return false; }
 
+    [[nodiscard]] virtual bool is_oneof() const { return false; }
+
  protected:
     explicit Type(const std::string &name) : name_(name) {}
 

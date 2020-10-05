@@ -44,7 +44,7 @@ type_:
 	| Any
 	| listType
 	| mapType
-	| oneOfType
+	| oneofType
 	| identifierName;
 
 baseType: String | I32 | I64 | U32 | U64 | Float | Bool;
@@ -58,7 +58,7 @@ mapType: OpenBrace baseType Colon elementType CloseBrace;
 elementType: type_;
 
 // (fieldName: SomeType|fieldName: OtherType)
-oneOfType: OpenParen structField (Or structField)+ CloseParen;
+oneofType: OpenParen structField (Or structField)+ CloseParen;
 
 structFieldList: structField (Comma structField)*;
 

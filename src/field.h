@@ -2,8 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-#ifndef TOOLMAN_STRUCT_FIELD_H_
-#define TOOLMAN_STRUCT_FIELD_H_
+#ifndef TOOLMAN_FIELD_H_
+#define TOOLMAN_FIELD_H_
 
 #include <memory>
 #include <string>
@@ -13,14 +13,14 @@
 
 namespace toolman {
 
-class StructField final {
+class Field final {
  public:
-    StructField(std::shared_ptr<Type> type,
-        std::string& name,
+    Field(std::shared_ptr<Type> type,
+        const std::string& name,
         bool optional)
     : type_(std::move(type)), name_(name), optional_(optional) {}
 
-    StructField(std::shared_ptr<Type> type,
+    Field(std::shared_ptr<Type> type,
                 std::string&& name,
                 bool optional)
     : type_(std::move(type)), name_(std::move(name)), optional_(optional) {}
@@ -37,4 +37,4 @@ class StructField final {
 
 }  // namespace toolman
 
-#endif  // TOOLMAN_STRUCT_FIELD_H_
+#endif  // TOOLMAN_FIELD_H_
