@@ -5,12 +5,15 @@
 #include <utility>
 #include "type.h"
 
-namespace toolman {
+namespace toolman
+{
 
-class PrimitiveType : public Type {
+    class PrimitiveType : public Type
+    {
     public:
         // Enumeration of toolman primitive types
-        enum class TypeKind : char {
+        enum class TypeKind : char
+        {
             Bool,
             I32,
             U32,
@@ -19,8 +22,10 @@ class PrimitiveType : public Type {
             Float,
             String,
         };
-        PrimitiveType(const std::string& name, TypeKind type_kind): Type(name), type_kind_(type_kind) {}
-        PrimitiveType(std::string&& name, TypeKind type_kind): Type(std::move(name)), type_kind_(type_kind) {}
+        PrimitiveType(const std::string &name, TypeKind type_kind)
+            : Type(name), type_kind_(type_kind) {}
+        PrimitiveType(std::string &&name, TypeKind type_kind)
+            : Type(std::move(name)), type_kind_(type_kind) {}
 
         bool is_primitive() const override { return true; }
         bool is_i32() const { return type_kind_ == TypeKind::I32; }
@@ -32,6 +37,6 @@ class PrimitiveType : public Type {
 
     private:
         TypeKind type_kind_;
-};
+    };
 } // namespace toolman
 #endif // PRIMITIVE_TYPE_H

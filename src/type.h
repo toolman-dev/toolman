@@ -4,26 +4,28 @@
 #include <string>
 #include <utility>
 
-namespace toolman {
+namespace toolman
+{
 
-class Type {
+    class Type
+    {
     public:
-        virtual void set_name(const std::string& name) { name_ = name; }
-        virtual void set_name(std::string&& name) { name_ = std::move(name); }
+        virtual void set_name(const std::string &name) { name_ = name; }
+        virtual void set_name(std::string &&name) { name_ = std::move(name); }
 
-        virtual const std::string& get_name() const { return name_; }
+        virtual const std::string &get_name() const { return name_; }
 
         virtual bool is_primitive() const { return false; }
         virtual bool is_enum() const { return false; }
         virtual bool is_struct() const { return false; }
         virtual bool is_list() const { return false; }
         virtual bool is_map() const { return false; }
-        
+
     protected:
-        explicit Type(const std::string& name) : name_(name) { }
-        explicit Type(std::string&& name) : name_(std::move(name)) { }
+        explicit Type(const std::string &name) : name_(name) {}
+        explicit Type(std::string &&name) : name_(std::move(name)) {}
         std::string name_;
-};
+    };
 
 } // namespace toolman
 #endif // TYPE_H
