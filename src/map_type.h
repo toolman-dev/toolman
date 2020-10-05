@@ -14,7 +14,7 @@
 
 namespace toolman {
 
-class MapType : public Type {
+class MapType final : public Type {
  public:
     MapType(const std::string &name,
         std::shared_ptr <PrimitiveType> key_type,

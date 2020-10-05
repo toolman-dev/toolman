@@ -12,7 +12,7 @@
 #include "src/type.h"
 
 namespace toolman {
-class EnumField {
+class EnumField final {
  public:
     EnumField(const std::string &name, int value)
             : name_(name), value_(value) {}

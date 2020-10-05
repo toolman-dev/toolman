@@ -13,7 +13,7 @@
 
 namespace toolman {
 
-class StructField {
+class StructField final {
  public:
     StructField(std::shared_ptr<Type> type,
     const std::string& name,

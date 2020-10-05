@@ -13,7 +13,7 @@
 
 namespace toolman {
 
-class ListType : public Type {
+class ListType final : public Type {
  public:
     ListType(const std::string &name, std::shared_ptr <Type> elem_type)
             : Type(name), elem_type_(elem_type) {}

@@ -42,11 +42,11 @@ class CustomType : public Type {
     std::vector<F> fields_;
 };
 
-class StructType : public CustomType<StructField> {
+class StructType final : public CustomType<StructField> {
     bool is_struct() const override { return true; }
 };
 
-class EnumType : public CustomType<EnumField> {
+class EnumType final : public CustomType<EnumField> {
     bool is_enum() const override { return true; }
 };
 

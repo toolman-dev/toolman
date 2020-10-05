@@ -11,7 +11,7 @@
 #include "src/type.h"
 
 namespace toolman {
-class PrimitiveType : public Type {
+class PrimitiveType final : public Type {
  public:
     // Enumeration of toolman primitive types
     enum class TypeKind : char {
