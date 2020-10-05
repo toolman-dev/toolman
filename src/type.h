@@ -2,6 +2,7 @@
 #define TYPE_H
 
 #include <string>
+#include <utility>
 
 namespace toolman {
 
@@ -19,8 +20,8 @@ class Type {
         virtual bool is_map() const { return false; }
         
     protected:
-        Type(const std::string& name) : name_(name) { }
-        Type(std::string&& name) : name_(std::move(name)) { }
+        explicit Type(const std::string& name) : name_(name) { }
+        explicit Type(std::string&& name) : name_(std::move(name)) { }
         std::string name_;
 };
 
