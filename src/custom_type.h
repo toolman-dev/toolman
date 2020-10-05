@@ -50,7 +50,7 @@ class EnumType final : public CustomType<EnumField> {
     bool is_enum() const override { return true; }
 };
 
-class OneofType final : public CustomType<EnumField> {
+class OneofType final : public CustomType<Field> {
     bool is_oneof() const override { return true; }
 };
 
