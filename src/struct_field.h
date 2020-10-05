@@ -1,5 +1,5 @@
-#ifndef STRUCT_FIELD_H
-#define STRUCT_FIELD_H
+#ifndef TOOLMAN_STRUCT_FIELD_H
+#define TOOLMAN_STRUCT_FIELD_H
 
 #include <memory>
 
@@ -27,4 +27,4 @@ class StructField {
 
 } // namespace toolman
 
-#endif // STRUCT_FIELD_H
+#endif // TOOLMAN_STRUCT_FIELD_H

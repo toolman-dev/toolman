@@ -9,10 +9,10 @@ namespace toolman {
     class EnumField {
     public:
         EnumField(const std::string &name, int value)
-                : Type(name), value_(value) {}
+                : name_(name), value_(value) {}
 
         EnumField(std::string &&name, int value)
-                : Type(std::move(name)), value_(value) {}
+                : name_(std::move(name)), value_(value) {}
 
         const std::string &get_name() const { return name_; }
 
