@@ -2,6 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+#include <utility>
+
 #include "src/literal.h"
 
 namespace toolman {
@@ -29,6 +31,7 @@ void ListLiteral<VL>::insert(VL&& value) {
                         + type_->get_elem_type()->to_string() + "`, found `"
                         + value.get_type()->to_string() +"`");
     }
+    value_.emplace(std::forward<VL>(value));
 }
 
 }  // namespace toolman
