@@ -49,6 +49,9 @@ class MapLiteral final : public Doc {
             :Doc(line_no, column_no, file),
             type_(std::move(type)) {}
 
+    // Insert a k-v literal pair into the map literal.
+    // If the key or value type did not match
+    // the method will throw TypeError exception.
     void insert(std::pair<KL, VL> kv_pair);
 
     [[nodiscard]] std::shared_ptr<MapType> get_type() const { return type_; }
@@ -68,6 +71,9 @@ class ListLiteral final : public Doc {
             :Doc(line_no, column_no, file),
              type_(std::move(type)) {}
 
+    // Insert a value literal into the list literal.
+    // If the value type did not match
+    // the method will throw TypeError exception.
     void insert(VL&& value);
 
     [[nodiscard]] std::shared_ptr<ListType> get_type() const { return type_; }
