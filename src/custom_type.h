@@ -22,6 +22,7 @@ class CustomType : public Type {
     using Type::Type;
 
     bool append_field(F f) {
+        // returns false when there is a conflict of field names
         if (get_field_by_name(f.get_name()).has_value()) {
             return false;
         }
