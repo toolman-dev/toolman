@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-#include "src/doc.h"
+#include "src/stmt_info.h"
 
 namespace toolman {
 class Error {

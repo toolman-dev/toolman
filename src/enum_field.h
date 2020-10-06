@@ -9,17 +9,17 @@
 #include <string>
 #include <utility>
 
-#include "src/doc.h"
 #include "src/type.h"
+#include "src/stmt_info.h"
 
 namespace toolman {
-class EnumField final : public Doc {
+class EnumField final : public HasStmtInfo {
  public:
   template <typename S, typename SI>
   EnumField(S&& name, int value, SI&& stmt_info)
       : name_(std::forward<S>(name)),
         value_(value),
-        Doc(std::forward<SI>(stmt_info)) {}
+        HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
 

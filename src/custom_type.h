@@ -44,6 +44,7 @@ class CustomType : public Type {
     return std::nullopt;
   }
 
+  [[nodiscard]] bool is_public() const {return is_public_;}
  private:
   std::vector<F> fields_;
   bool is_public_;

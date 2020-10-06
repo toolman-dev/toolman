@@ -9,19 +9,19 @@
 #include <string>
 #include <utility>
 
-#include "src/doc.h"
 #include "src/type.h"
+#include "src/stmt_info.h"
 
 namespace toolman {
 
-class Field final : public Doc {
+class Field final : public HasStmtInfo {
  public:
   template <typename S, typename SI>
   Field(S&& name, std::shared_ptr<Type> type, bool optional, SI&& stmt_info)
       : type_(std::forward<S>(type)),
         name_(name),
         optional_(optional),
-        Doc(std::forward<SI>(stmt_info)) {}
+        HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
 

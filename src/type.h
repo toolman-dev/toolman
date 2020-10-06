@@ -8,11 +8,11 @@
 #include <string>
 #include <utility>
 
-#include "src/doc.h"
+#include "src/stmt_info.h"
 
 namespace toolman {
 
-class Type : public Doc {
+class Type : public HasStmtInfo {
  public:
   [[nodiscard]] virtual const std::string& get_name() const { return name_; }
 
@@ -33,7 +33,7 @@ class Type : public Doc {
  protected:
   template <typename S, typename SI>
   Type(S&& name, SI&& stmt_info)
-      : name_(std::forward<S>(name)), Doc(std::forward<S>(stmt_info)) {}
+      : name_(std::forward<S>(name)), HasStmtInfo(std::forward<S>(stmt_info)) {}
 
   std::string name_;
 };

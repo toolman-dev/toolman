@@ -2,14 +2,14 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-#ifndef TOOLMAN_DOC_H_
-#define TOOLMAN_DOC_H_
+#ifndef TOOLMAN_STMTINFO_H_
+#define TOOLMAN_STMTINFO_H_
 
 #include <string>
 #include <utility>
 
 namespace toolman {
-class StmtInfo {
+class StmtInfo final {
  public:
   template <typename S>
   StmtInfo(unsigned int start_line_no, unsigned int start_column_no, S&& file)
@@ -41,10 +41,10 @@ class StmtInfo {
   std::string file_;
 };
 
-class Doc {
- public:
+class HasStmtInfo {
   template <typename SI>
-  explicit Doc(SI&& stmt_info) : stmt_info_(std::forward<SI>(stmt_info)) {}
+  explicit HasStmtInfo(SI&& stmt_info)
+      : stmt_info_(std::forward<SI>(stmt_info)) {}
   [[nodiscard]] const StmtInfo& get_stmt_info() const { return stmt_info_; }
   StmtInfo& mut_stmt_info() { return stmt_info_; }
 
@@ -52,4 +52,4 @@ class Doc {
   StmtInfo stmt_info_;
 };
 }  // namespace toolman
-#endif  // TOOLMAN_DOC_H_
+#endif  // TOOLMAN_STMTINFO_H_

@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include "src/doc.h"
+#include "src/stmt_info.h"
 #include "src/list_type.h"
 #include "src/map_type.h"
 #include "src/type.h"
@@ -19,12 +19,12 @@
 namespace toolman {
 
 template <typename V>
-class PrimitiveLiteral final : public Doc {
+class PrimitiveLiteral final : public HasStmtInfo {
  public:
   template <typename SI>
   PrimitiveLiteral(std::shared_ptr<PrimitiveType> type, V&& value,
                    SI&& stmt_info)
-      : Doc(std::forward<SI>(stmt_info)),
+      : HasStmtInfo(std::forward<SI>(stmt_info)),
         type_(std::move(type)),
         value_(std::forward<V>(value)) {}
 
@@ -40,11 +40,11 @@ class PrimitiveLiteral final : public Doc {
 };
 
 template <typename KL, typename VL>
-class MapLiteral final : public Doc {
+class MapLiteral final : public HasStmtInfo {
  public:
   template <typename SI>
   MapLiteral(std::shared_ptr<MapType> type, SI&& stmt_info)
-      : Doc(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
+      : HasStmtInfo(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
 
   // Insert a k-v literal pair into the map literal.
   // If the key or value type did not match
@@ -60,11 +60,11 @@ class MapLiteral final : public Doc {
 };
 
 template <typename VL>
-class ListLiteral final : public Doc {
+class ListLiteral final : public HasStmtInfo {
  public:
   template <typename SI>
   ListLiteral(std::shared_ptr<ListType> type, SI&& stmt_info)
-      : Doc(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
+      : HasStmtInfo(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
 
   // Insert a value literal into the list literal.
   // If the value type did not match
