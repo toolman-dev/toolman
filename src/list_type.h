@@ -15,23 +15,22 @@ namespace toolman {
 
 class ListType final : public Type {
  public:
-    ListType(const std::string &name,
+    ListType(std::string name,
              std::shared_ptr <Type> elem_type,
              unsigned int line_no,
-             unsigned int column_no)
-            : Type(name, line_no, column_no), elem_type_(std::move(elem_type)) {}
-
-    ListType(std::string &&name,
-             std::shared_ptr <Type> elem_type,
-             unsigned int line_no,
-             unsigned int column_no)
-            : Type(std::move(name), line_no, column_no), elem_type_(std::move(elem_type)) {}
+             unsigned int column_no,
+             std::string file)
+            : Type(std::move(name), line_no, column_no,std::move(file)),
+                   elem_type_(std::move(elem_type)) {}
 
     [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
     { return elem_type_; }
 
     [[nodiscard]] bool is_list() const override { return true; }
 
+    [[nodiscard]] std::string to_string() const override {
+        return "[" + elem_type_->to_string() +"]";
+    }
  private:
     std::shared_ptr <Type> elem_type_;
 };

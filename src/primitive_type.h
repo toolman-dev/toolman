@@ -27,14 +27,9 @@ class PrimitiveType final : public Type {
     PrimitiveType(const std::string &name,
                   TypeKind type_kind,
                   unsigned int line_no,
-                  unsigned int column_no)
-            : Type(name, line_no, column_no), type_kind_(type_kind) {}
-
-    PrimitiveType(std::string &&name,
-                  TypeKind type_kind,
-                  unsigned int line_no,
-                  unsigned int column_no)
-            : Type(std::move(name), line_no, column_no), type_kind_(type_kind) {}
+                  unsigned int column_no,
+                  std::string file)
+            : Type(name, line_no, column_no, std::move(file)), type_kind_(type_kind) {}
 
     [[nodiscard]] bool is_primitive() const override { return true; }
 
@@ -56,6 +51,25 @@ class PrimitiveType final : public Type {
 
     bool operator==(const PrimitiveType &rhs) const {
         return type_kind_ == rhs.type_kind_;
+    }
+
+    [[nodiscard]] std::string to_string() const override {
+        switch (type_kind_) {
+            case TypeKind::Bool:
+                return "bool";
+            case TypeKind::I32:
+                return "i32";
+            case TypeKind::U32:
+                return "u32";
+            case TypeKind::I64:
+                return "i64";
+            case TypeKind::U64:
+                return "u64";
+            case TypeKind::Float:
+                return "float";
+            case TypeKind::String:
+                return "string";
+        }
     }
 
  private:

@@ -20,17 +20,10 @@ class Field final : public Doc {
           const std::string& name,
           bool optional,
           unsigned int line_no,
-          unsigned int column_no)
+          unsigned int column_no,
+          std::string file)
     : type_(std::move(type)), name_(name),
-        optional_(optional), Doc(line_no, column_no) {}
-
-    Field(std::shared_ptr<Type> type,
-          std::string&& name,
-          bool optional,
-          unsigned int line_no,
-          unsigned int column_no)
-    : type_(std::move(type)), name_(std::move(name)),
-        optional_(optional), Doc(line_no, column_no) {}
+        optional_(optional), Doc(line_no, column_no, std::move(file)) {}
 
     [[nodiscard]] const std::string& get_name() const { return name_; }
 

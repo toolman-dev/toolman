@@ -23,16 +23,9 @@ class MapType final : public Type {
         std::shared_ptr <PrimitiveType> key_type,
         std::shared_ptr <Type> value_type,
         unsigned int line_no,
-        unsigned int column_no)
-        : Type(name, line_no, column_no), key_type_(std::move(key_type)),
-            value_type_(std::move(value_type)) {}
-
-    MapType(std::string &&name,
-        std::shared_ptr <PrimitiveType> key_type,
-        std::shared_ptr <Type> value_type,
-        unsigned int line_no,
-        unsigned int column_no)
-        : Type(std::move(name), line_no, column_no), key_type_(std::move(key_type)),
+        unsigned int column_no,
+        std::string file)
+        : Type(name, line_no, column_no, std::move(file)), key_type_(std::move(key_type)),
             value_type_(std::move(value_type)) {}
 
     [[nodiscard]] bool is_map() const override { return true; }
@@ -43,6 +36,10 @@ class MapType final : public Type {
 
     [[nodiscard]] const std::shared_ptr <Type> &get_value_type() const
         { return value_type_; }
+
+    [[nodiscard]] std::string to_string() const override {
+        return "{" + key_type_->to_string() + ", " + value_type_->to_string() +"}";
+    }
 
  private:
     // In toolman, map key must be primitive type.
