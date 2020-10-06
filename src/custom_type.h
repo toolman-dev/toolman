@@ -25,7 +25,7 @@ class CustomType : public Type {
         if (get_field_by_name(f.get_name()).has_value()) {
             return false;
         }
-        fields_.push_back(f);
+        fields_.push_back(std::move(f));
         return true;
     }
 
@@ -44,15 +44,21 @@ class CustomType : public Type {
 };
 
 class StructType final : public CustomType<Field> {
-    bool is_struct() const override { return true; }
+ public:
+    using CustomType::CustomType;
+    [[nodiscard]] bool is_struct() const override { return true; }
 };
 
 class EnumType final : public CustomType<EnumField> {
-    bool is_enum() const override { return true; }
+ public:
+    using CustomType::CustomType;
+    [[nodiscard]] bool is_enum() const override { return true; }
 };
 
 class OneofType final : public CustomType<Field> {
-    bool is_oneof() const override { return true; }
+ public:
+    using CustomType::CustomType;
+    [[nodiscard]] bool is_oneof() const override { return true; }
 };
 
 }  // namespace toolman

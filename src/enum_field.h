@@ -9,16 +9,23 @@
 #include <string>
 #include <utility>
 
+#include "src/doc.h"
 #include "src/type.h"
 
 namespace toolman {
-class EnumField final {
+class EnumField final : public Doc {
  public:
-    EnumField(const std::string &name, int value)
-            : name_(name), value_(value) {}
+    EnumField(const std::string &name,
+              int value,
+              unsigned int line_no,
+              unsigned int column_no)
+              : name_(name), value_(value), Doc(line_no, column_no) {}
 
-    EnumField(std::string &&name, int value)
-            : name_(std::move(name)), value_(value) {}
+    EnumField(std::string &&name,
+              int value,
+              unsigned int line_no,
+              unsigned int column_no)
+              : name_(std::move(name)), value_(value), Doc(line_no, column_no) {}
 
     [[nodiscard]] const std::string &get_name() const { return name_; }
 

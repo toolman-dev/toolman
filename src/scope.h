@@ -20,7 +20,10 @@ class Scope {
     std::optional <std::shared_ptr<Type>> lookup_type(const std::string &name);
 
     // Declare a type into the scope.
-    std::optional <std::shared_ptr<Type>> declare(std::shared_ptr <Type> type);
+    // If the scope did not have this scope present, `true` is returned.
+    // If the map did have this key present, the value is updated,
+    // and the `false` is returned.
+    bool declare(std::shared_ptr <Type> type);
 
  private:
     // Map of names to types

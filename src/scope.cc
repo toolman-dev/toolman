@@ -4,6 +4,7 @@
 
 #include <optional>
 #include <memory>
+#include <utility>
 
 #include "src/type.h"
 #include "src/scope.h"
@@ -18,12 +19,9 @@ std::optional <std::shared_ptr<Type>> Scope::lookup_type(
     return std::nullopt;
 }
 
-std::optional <std::shared_ptr<Type>> Scope::declare(
-    std::shared_ptr <Type> type) {
-    if (auto emp_res = types_.emplace(type->get_name(), type); emp_res.second) {
-        return {emp_res.first->second};
-    }
-    return std::nullopt;
+bool Scope::declare(std::shared_ptr <Type> type) {
+    auto res = types_.emplace(type->get_name(), std::move(type));
+    return res.second;
 }
 
 }  // namespace toolman

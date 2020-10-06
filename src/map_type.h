@@ -16,16 +16,23 @@ namespace toolman {
 
 class MapType final : public Type {
  public:
+    using KeyType = PrimitiveType;
+    using ValueType = Type;
+    
     MapType(const std::string &name,
         std::shared_ptr <PrimitiveType> key_type,
-        std::shared_ptr <Type> value_type)
-        : Type(name), key_type_(std::move(key_type)),
+        std::shared_ptr <Type> value_type,
+        unsigned int line_no,
+        unsigned int column_no)
+        : Type(name, line_no, column_no), key_type_(std::move(key_type)),
             value_type_(std::move(value_type)) {}
 
     MapType(std::string &&name,
         std::shared_ptr <PrimitiveType> key_type,
-        std::shared_ptr <Type> value_type)
-        : Type(std::move(name)), key_type_(std::move(key_type)),
+        std::shared_ptr <Type> value_type,
+        unsigned int line_no,
+        unsigned int column_no)
+        : Type(std::move(name), line_no, column_no), key_type_(std::move(key_type)),
             value_type_(std::move(value_type)) {}
 
     [[nodiscard]] bool is_map() const override { return true; }
@@ -39,8 +46,8 @@ class MapType final : public Type {
 
  private:
     // In toolman, map key must be primitive type.
-    std::shared_ptr <PrimitiveType> key_type_;
-    std::shared_ptr <Type> value_type_;
+    std::shared_ptr <KeyType> key_type_;
+    std::shared_ptr <ValueType> value_type_;
 };
 
 }  // namespace toolman

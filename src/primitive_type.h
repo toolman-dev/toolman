@@ -24,11 +24,17 @@ class PrimitiveType final : public Type {
         String,
     };
 
-    PrimitiveType(const std::string &name, TypeKind type_kind)
-            : Type(name), type_kind_(type_kind) {}
+    PrimitiveType(const std::string &name,
+                  TypeKind type_kind,
+                  unsigned int line_no,
+                  unsigned int column_no)
+            : Type(name, line_no, column_no), type_kind_(type_kind) {}
 
-    PrimitiveType(std::string &&name, TypeKind type_kind)
-            : Type(std::move(name)), type_kind_(type_kind) {}
+    PrimitiveType(std::string &&name,
+                  TypeKind type_kind,
+                  unsigned int line_no,
+                  unsigned int column_no)
+            : Type(std::move(name), line_no, column_no), type_kind_(type_kind) {}
 
     [[nodiscard]] bool is_primitive() const override { return true; }
 
@@ -47,6 +53,10 @@ class PrimitiveType final : public Type {
 
     [[nodiscard]] bool is_string() const
         { return type_kind_ == TypeKind::String; }
+
+    bool operator==(const PrimitiveType &rhs) const {
+        return type_kind_ == rhs.type_kind_;
+    }
 
  private:
     TypeKind type_kind_;

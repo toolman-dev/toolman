@@ -10,7 +10,7 @@
 
 namespace toolman {
 
-class Type {
+class Type : public Doc {
  public:
     [[nodiscard]] virtual const std::string &get_name() const { return name_; }
 
@@ -27,9 +27,9 @@ class Type {
     [[nodiscard]] virtual bool is_oneof() const { return false; }
 
  protected:
-    explicit Type(const std::string &name) : name_(name) {}
+    Type(const std::string &name, unsigned int line_no, unsigned int column_no) : name_(name), Doc(line_no, column_no) {}
 
-    explicit Type(std::string &&name) : name_(std::move(name)) {}
+    Type(std::string &&name, unsigned int line_no, unsigned int column_no) : name_(std::move(name)), Doc(line_no, column_no) {}
 
     std::string name_;
 };

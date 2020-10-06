@@ -10,20 +10,27 @@
 #include <utility>
 
 #include "src/type.h"
+#include "src/doc.h"
 
 namespace toolman {
 
-class Field final {
+class Field final : public Doc {
  public:
     Field(std::shared_ptr<Type> type,
-        const std::string& name,
-        bool optional)
-    : type_(std::move(type)), name_(name), optional_(optional) {}
+          const std::string& name,
+          bool optional,
+          unsigned int line_no,
+          unsigned int column_no)
+    : type_(std::move(type)), name_(name),
+        optional_(optional), Doc(line_no, column_no) {}
 
     Field(std::shared_ptr<Type> type,
-                std::string&& name,
-                bool optional)
-    : type_(std::move(type)), name_(std::move(name)), optional_(optional) {}
+          std::string&& name,
+          bool optional,
+          unsigned int line_no,
+          unsigned int column_no)
+    : type_(std::move(type)), name_(std::move(name)),
+        optional_(optional), Doc(line_no, column_no) {}
 
     [[nodiscard]] const std::string& get_name() const { return name_; }
 
