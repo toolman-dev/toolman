@@ -7,13 +7,17 @@
 
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace toolman {
 class TypeError : public std::runtime_error {
  public:
-    TypeError(std::string message_,
-              unsigned int line_no_,
-              unsigned int column_no_);
+    template <typename S>
+    TypeError(S&& message,
+              unsigned int line_no,
+              unsigned int column_no)
+              : message_(std::forward<S>(message)), line_no_(line_no),
+                  column_no_(column_no);
  private:
     std::string message_;
     unsigned int line_no_;

@@ -11,8 +11,10 @@
 namespace toolman {
 class Doc {
  public:
-    Doc(unsigned int line_no, unsigned int column_no, std::string file)
-        : line_no_(line_no), column_no_(column_no), file_(std::move(file)) {}
+    template <typename S>
+    Doc(unsigned int line_no, unsigned int column_no, S&& file)
+        : line_no_(line_no), column_no_(column_no),
+            file_(std::forward<S>(file)) {}
 
     [[nodiscard]] unsigned int get_line_no() const { return line_no_; }
     [[nodiscard]] unsigned int get_column_no() const { return column_no_; }

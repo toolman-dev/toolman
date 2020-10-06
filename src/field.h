@@ -16,14 +16,15 @@ namespace toolman {
 
 class Field final : public Doc {
  public:
-    Field(std::shared_ptr<Type> type,
-          const std::string& name,
+    template <typename S1, typename S2>
+    Field(S1&& name,
+          std::shared_ptr<Type> type,
           bool optional,
           unsigned int line_no,
           unsigned int column_no,
-          std::string file)
-    : type_(std::move(type)), name_(name),
-        optional_(optional), Doc(line_no, column_no, std::move(file)) {}
+          S2&& file)
+    : type_(std::forward<S1>(type)), name_(name),
+        optional_(optional), Doc(line_no, column_no, std::forward<S2>(file)) {}
 
     [[nodiscard]] const std::string& get_name() const { return name_; }
 

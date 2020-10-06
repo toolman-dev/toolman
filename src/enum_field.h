@@ -15,13 +15,14 @@
 namespace toolman {
 class EnumField final : public Doc {
  public:
-    EnumField(std::string name,
+    template <typename S1, typename S2>
+    EnumField(S1&& name,
               int value,
               unsigned int line_no,
               unsigned int column_no,
-              std::string file)
-              : name_(std::move(name)), value_(value),
-              Doc(line_no, column_no, std::move(file)) {}
+              S2&& file)
+              : name_(std::forward<S1>(name)), value_(value),
+              Doc(line_no, column_no, std::forward<S2>(file)) {}
 
     [[nodiscard]] const std::string &get_name() const { return name_; }
 

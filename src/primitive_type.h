@@ -24,13 +24,14 @@ class PrimitiveType final : public Type {
         String,
     };
 
-    PrimitiveType(const std::string &name,
+    template <typename S1, typename S2>
+    PrimitiveType(S1&& name,
                   TypeKind type_kind,
                   unsigned int line_no,
                   unsigned int column_no,
-                  std::string file)
-            : Type(name, line_no, column_no, std::move(file)),
-            type_kind_(type_kind) {}
+                  S2&& file)
+            : Type(std::forward<S1>(name), line_no, column_no,
+                std::forward<S2>(file)), type_kind_(type_kind) {}
 
     [[nodiscard]] bool is_primitive() const override { return true; }
 

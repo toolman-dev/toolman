@@ -31,11 +31,13 @@ class Type : public Doc {
     [[nodiscard]] virtual std::string to_string() const = 0;
 
  protected:
-    Type(std::string name,
+    template <typename S1, typename S2>
+    Type(S1&& name,
          unsigned int line_no,
          unsigned int column_no,
-         std::string file)
-         : name_(std::move(name)), Doc(line_no, column_no, std::move(file)) {}
+         S2&& file)
+         : name_(std::forward<S1>(name)), Doc(line_no, column_no,
+            std::forward<S2>(file)) {}
 
     std::string name_;
 };

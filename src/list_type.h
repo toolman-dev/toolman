@@ -15,13 +15,14 @@ namespace toolman {
 
 class ListType final : public Type {
  public:
-    ListType(std::string name,
+    template <typename S1, typename S2>
+    ListType(S1&& name,
              std::shared_ptr <Type> elem_type,
              unsigned int line_no,
              unsigned int column_no,
-             std::string file)
-            : Type(std::move(name), line_no, column_no, std::move(file)),
-                   elem_type_(std::move(elem_type)) {}
+             S2&& file)
+            : Type(std::forward<S1>(name), line_no, column_no,
+                std::forward<S2>(file)), elem_type_(std::move(elem_type)) {}
 
     [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
     { return elem_type_; }

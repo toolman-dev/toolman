@@ -19,14 +19,15 @@ class MapType final : public Type {
     using KeyType = PrimitiveType;
     using ValueType = Type;
 
-    MapType(const std::string &name,
+    template <typename S1, typename S2>
+    MapType(S1&& name,
         std::shared_ptr <PrimitiveType> key_type,
         std::shared_ptr <Type> value_type,
         unsigned int line_no,
         unsigned int column_no,
-        std::string file)
-        : Type(name, line_no, column_no, std::move(file)),
-        key_type_(std::move(key_type)),
+        S2&&  file)
+        : Type(std::forward<S2>(name), line_no, column_no,
+            std::forward<S2>(file)), key_type_(std::move(key_type)),
             value_type_(std::move(value_type)) {}
 
     [[nodiscard]] bool is_map() const override { return true; }
