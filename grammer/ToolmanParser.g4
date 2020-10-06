@@ -113,9 +113,9 @@ numericLiteral:
 	| OctalIntegerLiteral
 	| BinaryIntegerLiteral;
 
-listLiteral: OpenBracket elementList? CloseBracket;
+listLiteral: OpenBracket listElementList? CloseBracket;
 
-elementList: listElement (Comma listElement)*;
+listElementList: listElement (Comma listElement)*;
 
 listElement: literal Comma?;
 
@@ -123,4 +123,3 @@ mapLiteral:
 	OpenBrace baseLiteral Colon literal (
 		Comma baseLiteral Colon literal
 	)* CloseBrace;
-
