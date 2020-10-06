@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace toolman{
+namespace toolman {
 class TypeError : public std::runtime_error {
  public:
     TypeError(std::string message_,
@@ -21,5 +21,4 @@ class TypeError : public std::runtime_error {
 };
 
 }  // namespace toolman
-
-#endif //TOOLMAN_TYPE_ERROR_H_
+#endif  // TOOLMAN_TYPE_ERROR_H_

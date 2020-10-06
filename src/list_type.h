@@ -19,13 +19,15 @@ class ListType final : public Type {
              std::shared_ptr <Type> elem_type,
              unsigned int line_no,
              unsigned int column_no)
-            : Type(name, line_no, column_no), elem_type_(std::move(elem_type)) {}
+            : Type(name, line_no, column_no),
+               elem_type_(std::move(elem_type)) {}
 
     ListType(std::string &&name,
              std::shared_ptr <Type> elem_type,
              unsigned int line_no,
              unsigned int column_no)
-            : Type(std::move(name), line_no, column_no), elem_type_(std::move(elem_type)) {}
+            : Type(std::move(name), line_no, column_no),
+               elem_type_(std::move(elem_type)) {}
 
     [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
     { return elem_type_; }

@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 
+#include "src/doc.h"
+
 namespace toolman {
 
 class Type : public Doc {
@@ -27,9 +29,11 @@ class Type : public Doc {
     [[nodiscard]] virtual bool is_oneof() const { return false; }
 
  protected:
-    Type(const std::string &name, unsigned int line_no, unsigned int column_no) : name_(name), Doc(line_no, column_no) {}
+    Type(const std::string &name, unsigned int line_no, unsigned int column_no)
+      : name_(name), Doc(line_no, column_no) {}
 
-    Type(std::string &&name, unsigned int line_no, unsigned int column_no) : name_(std::move(name)), Doc(line_no, column_no) {}
+    Type(std::string &&name, unsigned int line_no, unsigned int column_no)
+      : name_(std::move(name)), Doc(line_no, column_no) {}
 
     std::string name_;
 };

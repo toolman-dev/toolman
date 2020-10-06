@@ -18,7 +18,7 @@ class MapType final : public Type {
  public:
     using KeyType = PrimitiveType;
     using ValueType = Type;
-    
+
     MapType(const std::string &name,
         std::shared_ptr <PrimitiveType> key_type,
         std::shared_ptr <Type> value_type,
@@ -32,7 +32,8 @@ class MapType final : public Type {
         std::shared_ptr <Type> value_type,
         unsigned int line_no,
         unsigned int column_no)
-        : Type(std::move(name), line_no, column_no), key_type_(std::move(key_type)),
+        : Type(std::move(name), line_no, column_no),
+            key_type_(std::move(key_type)),
             value_type_(std::move(value_type)) {}
 
     [[nodiscard]] bool is_map() const override { return true; }
