@@ -9,6 +9,7 @@
 #include <utility>
 #include <map>
 #include <vector>
+#include <string>
 
 #include "src/doc.h"
 #include "src/type.h"
@@ -29,7 +30,9 @@ class PrimitiveLiteral final : public Doc {
                      :Doc(line_no, column_no, file),
                      type_(std::move(type)), value_(value) {}
 
-    [[nodiscard]] std::shared_ptr<PrimitiveType> get_type() const { return type_; }
+    [[nodiscard]] std::shared_ptr<PrimitiveType>
+      get_type() const { return type_; }
+
     V get_value() const { return value_; }
  private:
     std::shared_ptr<PrimitiveType> type_;
