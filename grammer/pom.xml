@@ -36,6 +36,7 @@
 						<include>ToolmanLexer.g4</include>
 						<include>ToolmanParser.g4</include>
 					</includes>
+					<visitor>false</visitor>
 					<listener>true</listener>
 					<treatWarningsAsErrors>true</treatWarningsAsErrors>
 					<options>

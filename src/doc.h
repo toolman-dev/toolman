@@ -12,10 +12,9 @@ namespace toolman {
 class StmtInfo {
  public:
   template <typename S>
-  StmtInfo(std::pair<unsigned int, unsigned int> line_no,
-           std::pair<unsigned int, unsigned int> column_no, S&& file)
-      : line_no_(std::move(line_no)),
-        column_no_(std::move(column_no)),
+  StmtInfo(unsigned int start_line_no, unsigned int start_column_no, S&& file)
+      : line_no_({start_line_no, 0}),
+        column_no_({start_column_no, 0}),
         file_(std::forward<S>(file)) {}
 
   [[nodiscard]] const std::pair<unsigned int, unsigned int>& get_line_no()
@@ -28,6 +27,14 @@ class StmtInfo {
   }
   [[nodiscard]] const std::string& get_file() const { return file_; }
 
+  void set_end_line_no(unsigned int end_line_no) {
+    line_no_.second = end_line_no;
+  }
+
+  void set_end_column_no(unsigned int end_column_no) {
+    column_no_.second = end_column_no;
+  }
+
  protected:
   std::pair<unsigned int, unsigned int> line_no_;
   std::pair<unsigned int, unsigned int> column_no_;
@@ -39,6 +46,7 @@ class Doc {
   template <typename SI>
   explicit Doc(SI&& stmt_info) : stmt_info_(std::forward<SI>(stmt_info)) {}
   [[nodiscard]] const StmtInfo& get_stmt_info() const { return stmt_info_; }
+  StmtInfo& mut_stmt_info() { return stmt_info_; }
 
  protected:
   StmtInfo stmt_info_;

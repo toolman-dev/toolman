@@ -20,7 +20,10 @@ class EnumField;
 template <typename F>
 class CustomType : public Type {
  public:
-  using Type::Type;
+  template <typename S, typename SI>
+  CustomType(S&& name, SI&& stmt_info, bool is_public)
+      : Type(std::forward<S>(name), std::forward<S>(stmt_info)),
+        is_public_(is_public) {}
 
   bool append_field(F f) {
     // returns false when there is a conflict of field names
@@ -32,8 +35,8 @@ class CustomType : public Type {
   }
 
   [[nodiscard]] std::optional<F> get_field_by_name(
-      const std::string &field_name) const {
-    for (const auto &f : fields_) {
+      const std::string& field_name) const {
+    for (const auto& f : fields_) {
       if (f.get_name() == field_name) {
         return std::make_optional(f);
       }
@@ -43,6 +46,7 @@ class CustomType : public Type {
 
  private:
   std::vector<F> fields_;
+  bool is_public_;
 };
 
 class StructType final : public CustomType<Field> {
