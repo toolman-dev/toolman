@@ -29,7 +29,8 @@ class PrimitiveType final : public Type {
                   unsigned int line_no,
                   unsigned int column_no,
                   std::string file)
-            : Type(name, line_no, column_no, std::move(file)), type_kind_(type_kind) {}
+            : Type(name, line_no, column_no, std::move(file)),
+            type_kind_(type_kind) {}
 
     [[nodiscard]] bool is_primitive() const override { return true; }
 

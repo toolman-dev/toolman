@@ -20,7 +20,8 @@ class EnumField final : public Doc {
               unsigned int line_no,
               unsigned int column_no,
               std::string file)
-              : name_(std::move(name)), value_(value), Doc(line_no, column_no, std::move(file)) {}
+              : name_(std::move(name)), value_(value),
+              Doc(line_no, column_no, std::move(file)) {}
 
     [[nodiscard]] const std::string &get_name() const { return name_; }
 
@@ -32,4 +33,4 @@ class EnumField final : public Doc {
 };
 }  // namespace toolman
 
-#endif  //TOOLMAN_ENUM_FIELD_H_
+#endif  // TOOLMAN_ENUM_FIELD_H_

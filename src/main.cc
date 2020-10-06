@@ -4,8 +4,6 @@
 
 #include <iostream>
 
-#include "src/primitive_type.h"
-
 int main() {
     std::cout << "hello toolman" << std::endl;
     return 0;

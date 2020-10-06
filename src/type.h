@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 
+#include "src/doc.h"
+
 namespace toolman {
 
 class Type : public Doc {

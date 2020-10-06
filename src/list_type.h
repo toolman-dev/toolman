@@ -20,7 +20,7 @@ class ListType final : public Type {
              unsigned int line_no,
              unsigned int column_no,
              std::string file)
-            : Type(std::move(name), line_no, column_no,std::move(file)),
+            : Type(std::move(name), line_no, column_no, std::move(file)),
                    elem_type_(std::move(elem_type)) {}
 
     [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
