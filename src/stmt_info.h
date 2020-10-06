@@ -11,12 +11,17 @@
 namespace toolman {
 class StmtInfo final {
  public:
-  template <typename S>
-  StmtInfo(unsigned int start_line_no, unsigned int start_column_no, S&& file)
+  StmtInfo(unsigned int start_line_no, unsigned int start_column_no,
+           std::shared_ptr<std::string> file)
       : line_no_({start_line_no, 0}),
         column_no_({start_column_no, 0}),
-        file_(std::forward<S>(file)) {}
-
+        file_(std::move(file)) {}
+  StmtInfo(std::pair<unsigned int, unsigned int> line_no,
+           std::pair<unsigned int, unsigned int> column_no,
+           std::shared_ptr<std::string> file)
+      : line_no_(std::move(line_no)),
+        column_no_(std::move(column_no)),
+        file_(std::move(file)) {}
   [[nodiscard]] const std::pair<unsigned int, unsigned int>& get_line_no()
       const {
     return line_no_;
@@ -25,7 +30,7 @@ class StmtInfo final {
       const {
     return column_no_;
   }
-  [[nodiscard]] const std::string& get_file() const { return file_; }
+  [[nodiscard]] std::shared_ptr<std::string> get_file() const { return file_; }
 
   void set_end_line_no(unsigned int end_line_no) {
     line_no_.second = end_line_no;
@@ -38,10 +43,11 @@ class StmtInfo final {
  protected:
   std::pair<unsigned int, unsigned int> line_no_;
   std::pair<unsigned int, unsigned int> column_no_;
-  std::string file_;
+  std::shared_ptr<std::string> file_;
 };
 
 class HasStmtInfo {
+ public:
   template <typename SI>
   explicit HasStmtInfo(SI&& stmt_info)
       : stmt_info_(std::forward<SI>(stmt_info)) {}

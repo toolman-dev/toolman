@@ -9,8 +9,8 @@
 #include <string>
 #include <utility>
 
-#include "src/type.h"
 #include "src/stmt_info.h"
+#include "src/type.h"
 
 namespace toolman {
 class EnumField final : public HasStmtInfo {

@@ -14,9 +14,10 @@ namespace toolman {
 
 class Document final {
  public:
-    const std::vector<Type>& get_types() { return types_; }
+  const std::vector<Type>& get_types() { return types_; }
+
  private:
-    std::vector<Type> types_;
+  std::vector<Type> types_;
 };
 }  // namespace toolman
 #endif  // TOOLMAN_DOC_H_

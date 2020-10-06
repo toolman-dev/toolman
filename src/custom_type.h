@@ -10,19 +10,18 @@
 #include <utility>
 #include <vector>
 
+#include "src/enum_field.h"
+#include "src/field.h"
 #include "src/type.h"
 
 namespace toolman {
-
-class Field;
-class EnumField;
 
 template <typename F>
 class CustomType : public Type {
  public:
   template <typename S, typename SI>
   CustomType(S&& name, SI&& stmt_info, bool is_public)
-      : Type(std::forward<S>(name), std::forward<S>(stmt_info)),
+      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
         is_public_(is_public) {}
 
   bool append_field(F f) {
@@ -44,7 +43,8 @@ class CustomType : public Type {
     return std::nullopt;
   }
 
-  [[nodiscard]] bool is_public() const {return is_public_;}
+  [[nodiscard]] bool is_public() const { return is_public_; }
+
  private:
   std::vector<F> fields_;
   bool is_public_;
@@ -54,18 +54,26 @@ class StructType final : public CustomType<Field> {
  public:
   using CustomType::CustomType;
   [[nodiscard]] bool is_struct() const override { return true; }
+
+  [[nodiscard]] std::string to_string() const override {
+    return "struct " + name_ + " {...}";
+  }
 };
 
 class EnumType final : public CustomType<EnumField> {
  public:
   using CustomType::CustomType;
   [[nodiscard]] bool is_enum() const override { return true; }
+  [[nodiscard]] std::string to_string() const override {
+    return "enum " + name_ + " {...}";
+  }
 };
 
 class OneofType final : public CustomType<Field> {
  public:
   using CustomType::CustomType;
   [[nodiscard]] bool is_oneof() const override { return true; }
+  [[nodiscard]] std::string to_string() const override { return "oneof(...)"; }
 };
 
 }  // namespace toolman

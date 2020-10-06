@@ -3,3 +3,5 @@
 // found in the LICENSE file.
 
 #include "src/walker.h"
+
+namespace toolman {}  // namespace toolman

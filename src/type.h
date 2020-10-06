@@ -33,7 +33,8 @@ class Type : public HasStmtInfo {
  protected:
   template <typename S, typename SI>
   Type(S&& name, SI&& stmt_info)
-      : name_(std::forward<S>(name)), HasStmtInfo(std::forward<S>(stmt_info)) {}
+      : name_(std::forward<S>(name)),
+        HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   std::string name_;
 };

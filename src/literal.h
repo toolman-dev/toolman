@@ -11,9 +11,9 @@
 #include <utility>
 #include <vector>
 
-#include "src/stmt_info.h"
 #include "src/list_type.h"
 #include "src/map_type.h"
+#include "src/stmt_info.h"
 #include "src/type.h"
 
 namespace toolman {

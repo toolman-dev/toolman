@@ -5,46 +5,54 @@
 #ifndef TOOLMAN_ERROR_H_
 #define TOOLMAN_ERROR_H_
 
+#include <memory>
 #include <string>
 #include <utility>
 
 #include "src/stmt_info.h"
+#include "src/type.h"
 
 namespace toolman {
 class Error {
  public:
-  enum class Type : char { Lexer, Syntax, Semantic };
+  enum class ErrorType : char { Lexer, Syntax, Semantic };
   enum class Level : char { Note, Warning, Fatal };
 
-  template <typename S, typename SI>
-  Error(Type type, Level level, S&& message, SI&& stmt_info)
-      : type_(type),
-        level_(level),
-        message_(std::forward<S>(message)),
-        stmt_info_(std::forward<SI>(stmt_info)) {}
+  Error(ErrorType type, Level level) : type_(type), level_(level) {}
+
+  template <typename S>
+  Error(ErrorType type, Level level, S&& message)
+      : type_(type), level_(level), message_(std::forward<S>(message)) {}
 
   [[nodiscard]] virtual std::string error() const { return message_; };
 
  protected:
-  Type type_;
+  ErrorType type_;
   Level level_;
-  StmtInfo stmt_info_;
   std::string message_;
 };
 
 class DuplicateDeclError final : public Error {
  public:
-  template <typename S, typename SI>
-  DuplicateDeclError(S&& message, SI&& stmt_info)
-      : Error(Error::Type::Semantic, Error::Level::Fatal,
-              std::forward<S>(message), std::forward<SI>(stmt_info)) {}
+  template <typename SI>
+  DuplicateDeclError(std::shared_ptr<Type> first_declared_type,
+                     SI&& duplicate_decl_stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "A type " + first_declared_type->to_string() +
+                  " has been defined more than once."),
+        first_declared_type_(std::move(first_declared_type)),
+        duplicate_decl_stmt_info_(std::forward<SI>(duplicate_decl_stmt_info)) {}
+
+ private:
+  std::shared_ptr<Type> first_declared_type_;
+  StmtInfo duplicate_decl_stmt_info_;
 };
 
 class LiteralElementTypeMismatchError final : public Error {
  public:
   template <typename S, typename SI>
   LiteralElementTypeMismatchError(S&& message, SI&& stmt_info)
-      : Error(Error::Type::Semantic, Error::Level::Fatal,
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               std::forward<S>(message), std::forward<SI>(stmt_info)) {}
 };
 
@@ -53,7 +61,7 @@ class FieldTypeMismatchError final : public Error {
   template <typename S, typename SI1, typename SI2>
   FieldTypeMismatchError(S&& message, SI1&& field_stmt_info,
                          SI2&& literal_stmt_info)
-      : Error(Error::Type::Semantic, Error::Level::Fatal,
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               std::forward<S>(message), std::forward<SI1>(field_stmt_info)),
         literal_stmt_info_(std::forward<SI2>(literal_stmt_info)) {}
 
