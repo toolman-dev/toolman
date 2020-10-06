@@ -9,31 +9,28 @@
 #include <string>
 #include <utility>
 
-#include "src/type.h"
 #include "src/doc.h"
+#include "src/type.h"
 
 namespace toolman {
 
 class Field final : public Doc {
  public:
-    template <typename S1, typename S2>
-    Field(S1&& name,
-          std::shared_ptr<Type> type,
-          bool optional,
-          unsigned int line_no,
-          unsigned int column_no,
-          S2&& file)
-    : type_(std::forward<S1>(type)), name_(name),
-        optional_(optional), Doc(line_no, column_no, std::forward<S2>(file)) {}
+  template <typename S, typename SI>
+  Field(S&& name, std::shared_ptr<Type> type, bool optional, SI&& stmt_info)
+      : type_(std::forward<S>(type)),
+        name_(name),
+        optional_(optional),
+        Doc(std::forward<SI>(stmt_info)) {}
 
-    [[nodiscard]] const std::string& get_name() const { return name_; }
+  [[nodiscard]] const std::string& get_name() const { return name_; }
 
-    [[nodiscard]] bool is_optional() const { return optional_; }
+  [[nodiscard]] bool is_optional() const { return optional_; }
 
  private:
-    std::shared_ptr<Type> type_;
-    std::string name_;
-    bool optional_;
+  std::shared_ptr<Type> type_;
+  std::string name_;
+  bool optional_;
 };
 
 }  // namespace toolman

@@ -14,32 +14,28 @@ namespace toolman {
 
 class Type : public Doc {
  public:
-    [[nodiscard]] virtual const std::string &get_name() const { return name_; }
+  [[nodiscard]] virtual const std::string& get_name() const { return name_; }
 
-    [[nodiscard]] virtual bool is_primitive() const { return false; }
+  [[nodiscard]] virtual bool is_primitive() const { return false; }
 
-    [[nodiscard]] virtual bool is_enum() const { return false; }
+  [[nodiscard]] virtual bool is_enum() const { return false; }
 
-    [[nodiscard]] virtual bool is_struct() const { return false; }
+  [[nodiscard]] virtual bool is_struct() const { return false; }
 
-    [[nodiscard]] virtual bool is_list() const { return false; }
+  [[nodiscard]] virtual bool is_list() const { return false; }
 
-    [[nodiscard]] virtual bool is_map() const { return false; }
+  [[nodiscard]] virtual bool is_map() const { return false; }
 
-    [[nodiscard]] virtual bool is_oneof() const { return false; }
+  [[nodiscard]] virtual bool is_oneof() const { return false; }
 
-    [[nodiscard]] virtual std::string to_string() const = 0;
+  [[nodiscard]] virtual std::string to_string() const = 0;
 
  protected:
-    template <typename S1, typename S2>
-    Type(S1&& name,
-         unsigned int line_no,
-         unsigned int column_no,
-         S2&& file)
-         : name_(std::forward<S1>(name)), Doc(line_no, column_no,
-            std::forward<S2>(file)) {}
+  template <typename S, typename SI>
+  Type(S&& name, SI&& stmt_info)
+      : name_(std::forward<S>(name)), Doc(std::forward<S>(stmt_info)) {}
 
-    std::string name_;
+  std::string name_;
 };
 
 }  // namespace toolman

@@ -17,13 +17,13 @@
 
 set (ANTLR4_OUTPUTS_DIR ${PROJECT_BINARY_DIR}/mvn_target/generated-sources/antlr4)
 
-if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR})
+if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR}/ToolmanParser.h)
     find_package(Java QUIET COMPONENTS Runtime)
 
     find_package(Maven REQUIRED)
 
     execute_process(
-        COMMAND ${Maven_EXECUTABLE} -f '${PROJECT_SOURCE_DIR}/grammer/pom.xml' antlr4:antlr4 '-Dantlr.build.target.dir=${PROJECT_BINARY_DIR}/mvn_target'
+        COMMAND ${Maven_EXECUTABLE} -f "${PROJECT_SOURCE_DIR}/grammer/pom.xml" antlr4:antlr4 "-Dantlr.build.target.dir=${PROJECT_BINARY_DIR}/mvn_target"
         OUTPUT_VARIABLE ANTLR_MVN_OUTPUT
         ERROR_VARIABLE ANTLR_MVN_ERROR
         RESULT_VARIABLE ANTLR_MVN_RESULT

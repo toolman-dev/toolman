@@ -13,7 +13,7 @@
 		<junit.version>4.12</junit.version>
 		<antlr.build.target.dir>${project.basedir}/../target/</antlr.build.target.dir>
 	</properties>
-	<dependencies></dependencies>
+	<dependencies/>
 	<build>
 		<directory>${antlr.build.target.dir}</directory>
 		<plugins>
@@ -36,12 +36,15 @@
 						<include>ToolmanLexer.g4</include>
 						<include>ToolmanParser.g4</include>
 					</includes>
-					<visitor>true</visitor>
 					<listener>true</listener>
 					<treatWarningsAsErrors>true</treatWarningsAsErrors>
 					<options>
 						<language>Cpp</language>
 					</options>
+					<arguments>
+						<argument>-package</argument>
+						<argument>toolman</argument>
+					</arguments>
 				</configuration>
 				<executions>
 					<execution>

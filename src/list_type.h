@@ -5,8 +5,8 @@
 #ifndef TOOLMAN_LIST_TYPE_H_
 #define TOOLMAN_LIST_TYPE_H_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "src/type.h"
@@ -15,25 +15,23 @@ namespace toolman {
 
 class ListType final : public Type {
  public:
-    template <typename S1, typename S2>
-    ListType(S1&& name,
-             std::shared_ptr <Type> elem_type,
-             unsigned int line_no,
-             unsigned int column_no,
-             S2&& file)
-            : Type(std::forward<S1>(name), line_no, column_no,
-                std::forward<S2>(file)), elem_type_(std::move(elem_type)) {}
+  template <typename S, typename SI>
+  ListType(S&& name, std::shared_ptr<Type> elem_type, SI&& stmt_info)
+      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
+        elem_type_(std::move(elem_type)) {}
 
-    [[nodiscard]] const std::shared_ptr <Type>& get_elem_type() const
-    { return elem_type_; }
+  [[nodiscard]] const std::shared_ptr<Type>& get_elem_type() const {
+    return elem_type_;
+  }
 
-    [[nodiscard]] bool is_list() const override { return true; }
+  [[nodiscard]] bool is_list() const override { return true; }
 
-    [[nodiscard]] std::string to_string() const override {
-        return "[" + elem_type_->to_string() +"]";
-    }
+  [[nodiscard]] std::string to_string() const override {
+    return "[" + elem_type_->to_string() + "]";
+  }
+
  private:
-    std::shared_ptr <Type> elem_type_;
+  std::shared_ptr<Type> elem_type_;
 };
 
 }  // namespace toolman
