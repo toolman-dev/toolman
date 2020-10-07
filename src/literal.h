@@ -18,29 +18,42 @@
 
 namespace toolman {
 
-template <typename V>
-class PrimitiveLiteral final : public HasStmtInfo {
+class Literal : public HasStmtInfo {
  public:
   template <typename SI>
-  PrimitiveLiteral(std::shared_ptr<PrimitiveType> type, V&& value,
-                   SI&& stmt_info)
-      : HasStmtInfo(std::forward<SI>(stmt_info)),
-        type_(std::move(type)),
-        value_(std::forward<V>(value)) {}
+  explicit Literal(SI&& stmt_info) : HasStmtInfo(std::forward<SI>(stmt_info)) {}
+  [[nodiscard]] virtual std::shared_ptr<Type> get_type() const = 0;
+  [[nodiscard]] virtual bool is_primitive() const { return false; }
+  [[nodiscard]] virtual bool is_list() const { return false; }
+  [[nodiscard]] virtual bool is_map() const { return false; }
+};
 
-  [[nodiscard]] std::shared_ptr<PrimitiveType> get_type() const {
+class PrimitiveLiteral final : public Literal {
+ public:
+  template <typename SI, typename S>
+  PrimitiveLiteral(std::shared_ptr<PrimitiveType> type, S&& value,
+                   SI&& stmt_info)
+      : Literal(std::forward<SI>(stmt_info)),
+        type_(std::move(type)),
+        value_(std::forward<>(value)) {}
+
+  [[nodiscard]] std::shared_ptr<Type> get_type() const override {
+    return get_primitive_type();
+  }
+
+  [[nodiscard]] std::shared_ptr<PrimitiveType> get_primitive_type() const {
     return type_;
   }
 
-  const V& get_value() const { return value_; }
+  [[nodiscard]] const std::string& get_value() const { return value_; }
+  [[nodiscard]] bool is_primitive() const override { return true; }
 
  private:
   std::shared_ptr<PrimitiveType> type_;
-  V value_;
+  std::string value_;
 };
 
-template <typename KL, typename VL>
-class MapLiteral final : public HasStmtInfo {
+class MapLiteral final : public Literal {
  public:
   template <typename SI>
   MapLiteral(std::shared_ptr<MapType> type, SI&& stmt_info)
@@ -49,30 +62,43 @@ class MapLiteral final : public HasStmtInfo {
   // Insert a k-v literal pair into the map literal.
   // If the key or value type did not match
   // the method will throw TypeError exception.
-  void insert(std::pair<KL, VL> kv_pair);
+  template <typename P>
+  void insert(P&& kv_pair);
 
-  [[nodiscard]] std::shared_ptr<MapType> get_type() const { return type_; }
-  [[nodiscard]] std::map<KL, VL> get_value() const { return value_; }
+  [[nodiscard]] std::shared_ptr<Type> get_type() const override {
+    return get_map_type();
+  }
+  [[nodiscard]] std::shared_ptr<MapType> get_map_type() const { return type_; }
+  [[nodiscard]] std::map<PrimitiveLiteral, Literal> get_value() const {
+    return value_;
+  }
+  [[nodiscard]] bool is_map() const override { return true; }
 
  private:
   std::shared_ptr<MapType> type_;
-  std::map<KL, VL> value_;
+  std::map<PrimitiveLiteral, Literal> value_;
 };
 
-template <typename VL>
-class ListLiteral final : public HasStmtInfo {
+class ListLiteral final : public Literal {
  public:
   template <typename SI>
   ListLiteral(std::shared_ptr<ListType> type, SI&& stmt_info)
-      : HasStmtInfo(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
+      : Literal(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
 
   // Insert a value literal into the list literal.
   // If the value type did not match
   // the method will throw TypeError exception.
-  void insert(VL&& value);
+  template <typename L>
+  void insert(L&& literal_value);
 
-  [[nodiscard]] std::shared_ptr<ListType> get_type() const { return type_; }
-  [[nodiscard]] std::vector<VL> get_value() const { return value_; }
+  [[nodiscard]] std::shared_ptr<Type> get_type() const override {
+    return get_list_type();
+  }
+  [[nodiscard]] std::shared_ptr<ListType> get_list_type() const {
+    return type_;
+  }
+  [[nodiscard]] std::vector<Literal> get_value() const { return value_; }
+  [[nodiscard]] bool is_list() const override { return true; }
 
  private:
   std::shared_ptr<ListType> type_;

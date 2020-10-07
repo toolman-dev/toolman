@@ -5,8 +5,8 @@
 #ifndef TOOLMAN_STMTINFO_H_
 #define TOOLMAN_STMTINFO_H_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace toolman {

@@ -30,6 +30,17 @@ class ListType final : public Type {
     return "[" + elem_type_->to_string() + "]";
   }
 
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_list()) {
+      return false;
+    }
+    return operator==(dynamic_cast<const ListType&>(rhs));
+  }
+
+  bool operator==(const ListType& rhs) const {
+    return elem_type_ == rhs.get_elem_type();
+  }
+
  private:
   std::shared_ptr<Type> elem_type_;
 };

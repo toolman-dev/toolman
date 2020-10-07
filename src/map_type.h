@@ -40,6 +40,18 @@ class MapType final : public Type {
     return "{" + key_type_->to_string() + ", " + value_type_->to_string() + "}";
   }
 
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_map()) {
+      return false;
+    }
+    return operator==(dynamic_cast<const MapType&>(rhs));
+  }
+
+  bool operator==(const MapType& rhs) const {
+    return key_type_ == rhs.get_key_type() &&
+           value_type_ == rhs.get_value_type();
+  }
+
  private:
   // In toolman, map key must be primitive type.
   std::shared_ptr<KeyType> key_type_;
