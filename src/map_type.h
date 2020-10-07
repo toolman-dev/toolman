@@ -20,7 +20,7 @@ class MapType final : public Type {
   using ValueType = Type;
 
   template <typename SI>
-  MapType(SI&& stmt_info) : Type(std::forward<SI>(stmt_info)) {}
+  MapType(SI&& stmt_info) : Type("map", std::forward<SI>(stmt_info)) {}
 
   template <typename SI>
   MapType(std::shared_ptr<PrimitiveType> key_type,
@@ -43,10 +43,12 @@ class MapType final : public Type {
     return "{" + key_type_->to_string() + ", " + value_type_->to_string() + "}";
   }
 
-  void set_key_type(std::shared_ptr<KeyType> key_type) { key_type_ = key_type; }
+  void set_key_type(std::shared_ptr<KeyType> key_type) {
+    key_type_ = std::move(key_type);
+  }
 
   void set_value_type(std::shared_ptr<ValueType> value_type) {
-    value_type_ = value_type;
+    value_type_ = std::move(value_type);
   }
 
   bool operator==(const Type& rhs) const override {

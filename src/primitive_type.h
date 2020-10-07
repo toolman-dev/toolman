@@ -25,8 +25,8 @@ class PrimitiveType final : public Type {
   };
 
   template <typename S, typename SI>
-  PrimitiveType(S&& name, TypeKind type_kind, SI&& stmt_info)
-      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
+  PrimitiveType(TypeKind type_kind, SI&& stmt_info)
+      : Type(type_kind_to_string(type_kind), std::forward<SI>(stmt_info)),
         type_kind_(type_kind) {}
 
   [[nodiscard]] bool is_primitive() const override { return true; }
@@ -59,26 +59,30 @@ class PrimitiveType final : public Type {
   }
 
   [[nodiscard]] std::string to_string() const override {
-    switch (type_kind_) {
-      case TypeKind::Bool:
-        return "bool";
-      case TypeKind::I32:
-        return "i32";
-      case TypeKind::U32:
-        return "u32";
-      case TypeKind::I64:
-        return "i64";
-      case TypeKind::U64:
-        return "u64";
-      case TypeKind::Float:
-        return "float";
-      case TypeKind::String:
-        return "string";
-    }
+    return type_kind_to_string(type_kind_);
   }
 
  private:
   TypeKind type_kind_;
+  static std::string type_kind_to_string(PrimitiveType::TypeKind type_kind) {
+    switch (type_kind) {
+      case PrimitiveType::TypeKind::Bool:
+        return "bool";
+      case PrimitiveType::TypeKind::I32:
+        return "i32";
+      case PrimitiveType::TypeKind::U32:
+        return "u32";
+      case PrimitiveType::TypeKind::I64:
+        return "i64";
+      case PrimitiveType::TypeKind::U64:
+        return "u64";
+      case PrimitiveType::TypeKind::Float:
+        return "float";
+      case PrimitiveType::TypeKind::String:
+        return "string";
+    }
+  }
 };
+
 }  // namespace toolman
 #endif  // TOOLMAN_PRIMITIVE_TYPE_H_

@@ -26,7 +26,7 @@ namespace toolman {
 class DeclPhaseWalker final : public ToolmanParserBaseListener {
  public:
   explicit DeclPhaseWalker(std::shared_ptr<std::string> file)
-      : file_(std::move(file)) {}
+      : type_scope_(std::make_shared<Scope>(Scope())), file_(std::move(file)) {}
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
     decl_type<ToolmanParser::StructDeclContext, StructType>(node);
   }
@@ -112,9 +112,7 @@ class FieldTypeBuilder {
   }
 
   // Other types besides map and list.
-  std::shared_ptr<Type> end_single_type() {
-    return current_type_;
-  }
+  std::shared_ptr<Type> end_single_type() { return current_type_; }
 
  private:
   std::stack<std::shared_ptr<Type>> type_stack_;

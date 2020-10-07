@@ -16,7 +16,7 @@ namespace toolman {
 class ListType final : public Type {
  public:
   template <typename SI>
-  ListType(SI&& stmt_info) : Type(std::forward<SI>(stmt_info)) {}
+  ListType(SI&& stmt_info) : Type("list", std::forward<SI>(stmt_info)) {}
 
   template <typename SI>
   ListType(std::shared_ptr<Type> elem_type, SI&& stmt_info)
@@ -33,7 +33,7 @@ class ListType final : public Type {
   }
 
   void set_elem_type(std::shared_ptr<Type> elem_type) {
-    elem_type_ = elem_type;
+    elem_type_ = std::move(elem_type);
   }
 
   bool operator==(const Type& rhs) const override {

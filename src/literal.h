@@ -38,10 +38,11 @@ class PrimitiveLiteral final : public Literal {
         value_(std::forward<>(value)) {}
 
   [[nodiscard]] std::shared_ptr<Type> get_type() const override {
-    return get_primitive_type();
+    return type_;
   }
 
-  [[nodiscard]] std::shared_ptr<PrimitiveType> get_primitive_type() const {
+  [[nodiscard]] const std::shared_ptr<PrimitiveType>& get_primitive_type()
+      const {
     return type_;
   }
 
@@ -66,17 +67,22 @@ class MapLiteral final : public Literal {
   void insert(P&& kv_pair);
 
   [[nodiscard]] std::shared_ptr<Type> get_type() const override {
-    return get_map_type();
+    return type_;
   }
-  [[nodiscard]] std::shared_ptr<MapType> get_map_type() const { return type_; }
-  [[nodiscard]] std::map<PrimitiveLiteral, Literal> get_value() const {
+  [[nodiscard]] const std::shared_ptr<MapType>& get_map_type() const {
+    return type_;
+  }
+
+  [[nodiscard]] const std::map<PrimitiveLiteral, std::unique_ptr<Literal>>&
+  get_value() const {
     return value_;
   }
+
   [[nodiscard]] bool is_map() const override { return true; }
 
  private:
   std::shared_ptr<MapType> type_;
-  std::map<PrimitiveLiteral, Literal> value_;
+  std::map<PrimitiveLiteral, std::unique_ptr<Literal>> value_;
 };
 
 class ListLiteral final : public Literal {
@@ -92,17 +98,19 @@ class ListLiteral final : public Literal {
   void insert(L&& literal_value);
 
   [[nodiscard]] std::shared_ptr<Type> get_type() const override {
-    return get_list_type();
+    return type_;
   }
   [[nodiscard]] std::shared_ptr<ListType> get_list_type() const {
     return type_;
   }
-  [[nodiscard]] std::vector<Literal> get_value() const { return value_; }
+  [[nodiscard]] const std::vector<std::unique_ptr<Literal>>& get_value() const {
+    return value_;
+  }
   [[nodiscard]] bool is_list() const override { return true; }
 
  private:
   std::shared_ptr<ListType> type_;
-  std::vector<VL> value_;
+  std::vector<std::unique_ptr<Literal>> value_;
 };
 
 }  // namespace toolman

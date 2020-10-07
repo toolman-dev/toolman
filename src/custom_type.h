@@ -49,6 +49,10 @@ class CustomType : public Type {
 
   [[nodiscard]] bool is_public() const { return is_public_; }
 
+  bool operator==(const Type& rhs) const override {
+    return get_name() == rhs.get_name();
+  };
+
  private:
   std::vector<F> fields_;
   bool is_public_;
@@ -58,6 +62,13 @@ class StructType final : public CustomType<Field> {
  public:
   using CustomType::CustomType;
   [[nodiscard]] bool is_struct() const override { return true; }
+
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_struct()) {
+      return false;
+    }
+    return CustomType::operator==(rhs);
+  }
 
   [[nodiscard]] std::string to_string() const override {
     return "struct " + name_ + " {...}";
@@ -71,6 +82,12 @@ class EnumType final : public CustomType<EnumField> {
   [[nodiscard]] std::string to_string() const override {
     return "enum " + name_ + " {...}";
   }
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_enum()) {
+      return false;
+    }
+    return CustomType::operator==(rhs);
+  }
 };
 
 class OneofType final : public CustomType<Field> {
@@ -78,6 +95,13 @@ class OneofType final : public CustomType<Field> {
   using CustomType::CustomType;
   [[nodiscard]] bool is_oneof() const override { return true; }
   [[nodiscard]] std::string to_string() const override { return "oneof(...)"; }
+
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_oneof()) {
+      return false;
+    }
+    return CustomType::operator==(rhs);
+  }
 };
 
 }  // namespace toolman
