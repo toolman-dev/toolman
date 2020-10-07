@@ -48,7 +48,7 @@ class MapType final : public Type {
   void set_value_type(std::shared_ptr<ValueType> value_type) {
     value_type_ = value_type;
   }
-  
+
   bool operator==(const Type& rhs) const override {
     if (!rhs.is_map()) {
       return false;
