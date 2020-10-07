@@ -6,6 +6,7 @@
 #define TOOLMAN_STMTINFO_H_
 
 #include <string>
+#include <memory>
 #include <utility>
 
 namespace toolman {

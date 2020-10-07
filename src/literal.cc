@@ -2,10 +2,9 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-#include "src/literal.h"
-
 #include <utility>
 
+#include "src/literal.h"
 #include "src/error.h"
 
 namespace toolman {

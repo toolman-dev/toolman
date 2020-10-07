@@ -24,7 +24,7 @@ class Error {
   Error(ErrorType type, Level level, S&& message)
       : type_(type), level_(level), message_(std::forward<S>(message)) {}
 
-  [[nodiscard]] virtual std::string error() const { return message_; };
+  [[nodiscard]] virtual std::string error() const { return message_; }
 
  protected:
   ErrorType type_;
