@@ -47,6 +47,13 @@ class PrimitiveType final : public Type {
     return type_kind_ == TypeKind::String;
   }
 
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_primitive()) {
+      return false;
+    }
+    return operator==(dynamic_cast<const PrimitiveType&>(rhs));
+  }
+
   bool operator==(const PrimitiveType& rhs) const {
     return type_kind_ == rhs.type_kind_;
   }

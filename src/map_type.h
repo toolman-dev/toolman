@@ -48,6 +48,18 @@ class MapType final : public Type {
   void set_value_type(std::shared_ptr<ValueType> value_type) {
     value_type_ = value_type;
   }
+  
+  bool operator==(const Type& rhs) const override {
+    if (!rhs.is_map()) {
+      return false;
+    }
+    return operator==(dynamic_cast<const MapType&>(rhs));
+  }
+
+  bool operator==(const MapType& rhs) const {
+    return key_type_ == rhs.get_key_type() &&
+           value_type_ == rhs.get_value_type();
+  }
 
  private:
   // In toolman, map key must be primitive type.

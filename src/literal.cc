@@ -10,8 +10,8 @@
 
 namespace toolman {
 
-template <typename KL, typename VL>
-void MapLiteral<KL, VL>::insert(std::pair<KL, VL> kv_pair) {
+template <typename P>
+void MapLiteral::insert(P&& kv_pair) {
   if (type_->get_key_type() != kv_pair.first.get_type()) {
     throw LiteralElementTypeMismatchError(
         "map key mismatched types. expected `" +
@@ -30,16 +30,15 @@ void MapLiteral<KL, VL>::insert(std::pair<KL, VL> kv_pair) {
   value_.emplace(kv_pair);
 }
 
-template <typename VL>
-void ListLiteral<VL>::insert(VL&& value) {
-  if (type_->get_elem_type() != value.get_value()) {
+template <typename L>
+void ListLiteral::insert(L&& value_literal) {
+  if (type_->get_elem_type() != value_literal.get_type()) {
     throw LiteralElementTypeMismatchError(
         "list mismatched types. expected `" +
             type_->get_elem_type()->to_string() + "`, found `" +
-            value.get_type()->to_string() + "`",
-        value.get_stmt_info());
+            value_literal.get_type()->to_string() + "`",
+        value_literal.get_stmt_info());
   }
-  value_.emplace(std::forward<VL>(value));
+  value_.emplace(std::forward<L>(value_literal));
 }
-
 }  // namespace toolman

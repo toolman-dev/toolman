@@ -30,6 +30,10 @@ class Type : public HasStmtInfo {
 
   [[nodiscard]] virtual std::string to_string() const = 0;
 
+  virtual bool operator==(const Type& rhs) const = 0;
+
+  virtual bool operator!=(const Type& rhs) const { return !(*this == rhs); }
+
  protected:
   template <typename S, typename SI>
   Type(S&& name, SI&& stmt_info)
