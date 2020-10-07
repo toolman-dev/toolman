@@ -61,13 +61,15 @@ mapKeyType: type_;
 
 mapValueType: type_;
 
+fieldType: type_;
+
 // (fieldName: SomeType|fieldName: OtherType)
 oneofType: OpenParen structField (Or structField)+ CloseParen;
 
 structFieldList: structField (Comma structField)*;
 
 structField:
-	identifierName Colon type_ QuestionMark? (
+	identifierName Colon fieldType QuestionMark? (
 		Assign (literal | enumItem)
 	)?;
 
