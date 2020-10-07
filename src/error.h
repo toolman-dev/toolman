@@ -71,10 +71,18 @@ class FieldTypeMismatchError final : public Error {
 
 class MapKeyTypeMustBePrimitiveError final : public Error {
  public:
-  MapKeyTypeMustBePrimitiveError(std::shared_ptr<Type> key_type)
+  explicit MapKeyTypeMustBePrimitiveError(std::shared_ptr<Type> key_type)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "The key of the map must be a primitive type. give " +
                   key_type->to_string()) {}
+};
+
+class CustomTypeNotFoundError final : public Error {
+ public:
+  template <typename SI>
+  CustomTypeNotFoundError(const std::string& type_name, SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "cannot find type `" + type_name + "`") {}
 };
 
 }  // namespace toolman

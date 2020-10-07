@@ -33,6 +33,7 @@ class Type : public HasStmtInfo {
   virtual bool operator==(const Type& rhs) const = 0;
 
   virtual bool operator!=(const Type& rhs) const { return !(*this == rhs); }
+  virtual ~Type() = default;
 
  protected:
   template <typename S, typename SI>

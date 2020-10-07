@@ -1,8 +1,7 @@
 /**
  * A Toolman grammar for ANTLR v4.
  * 
- * @author taoyu
- * @author taowei
+ * @author taoyu @author taowei
  */
 parser grammar ToolmanParser;
 
@@ -40,20 +39,14 @@ enumDecl:
 
 /// toolman types
 type_:
-	baseType
-	| Any
-	| listType
-	| mapType
-	| oneofType
-	| identifierName;
-
-baseType: String | I32 | I64 | U32 | U64 | Float | Bool;
-
-// [SomeType]
-listType: OpenBracket listElementType CloseBracket;
-
-// {keyType: valueType}
-mapType: OpenBrace mapKeyType Colon mapValueType CloseBrace;
+	(String | I32 | I64 | U32 | U64 | Float | Bool | Any)	# PrimitiveType
+	// [SomeType]
+	| OpenBracket listElementType CloseBracket              # ListType
+	// {keyType: valueType}
+	| OpenBrace mapKeyType Colon mapValueType CloseBrace    # MapType
+	// (fieldName: SomeType|fieldName: OtherType)
+	| OpenParen structField (Or structField)+ CloseParen	# OneofType
+	| identifierName										# CustomTypeName;
 
 listElementType: type_;
 
@@ -62,9 +55,6 @@ mapKeyType: type_;
 mapValueType: type_;
 
 fieldType: type_;
-
-// (fieldName: SomeType|fieldName: OtherType)
-oneofType: OpenParen structField (Or structField)+ CloseParen;
 
 structFieldList: structField (Comma structField)*;
 
@@ -102,9 +92,9 @@ keyword:
 	| U64
 	| Float;
 
-literal: baseLiteral | listLiteral | mapLiteral;
+literal: primitiveLiteral | listLiteral | mapLiteral;
 
-baseLiteral: BooleanLiteral | StringLiteral | numericLiteral;
+primitiveLiteral: BooleanLiteral | StringLiteral | numericLiteral;
 
 intgerLiteral:
 	DecIntegerLiteral
@@ -126,6 +116,6 @@ listElementList: listElement (Comma listElement)*;
 listElement: literal Comma?;
 
 mapLiteral:
-	OpenBrace baseLiteral Colon literal (
-		Comma baseLiteral Colon literal
+	OpenBrace primitiveLiteral Colon literal (
+		Comma primitiveLiteral Colon literal
 	)* CloseBrace;

@@ -14,6 +14,7 @@
 
 #include "ToolmanParserBaseListener.h"
 #include "src/custom_type.h"
+#include "src/document.h"
 #include "src/error.h"
 #include "src/field.h"
 #include "src/list_type.h"
@@ -21,6 +22,15 @@
 #include "src/scope.h"
 
 namespace toolman {
+
+template <typename NODE, typename FILE>
+StmtInfo get_stmt_info(NODE* node, FILE&& file) {
+  auto id_start_token = node->getStart();
+  return StmtInfo(
+      {id_start_token->getLine(), node->getStop()->getLine()},
+      {id_start_token->getStartIndex(), id_start_token->getStopIndex()},
+      std::forward<FILE>(file));
+}
 
 // Declare phase
 class DeclPhaseWalker final : public ToolmanParserBaseListener {
@@ -48,12 +58,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
 
   template <typename NODE, typename DECL_TYPE>
   void decl_type(NODE* node) {
-    auto id_start_token = node->identifierName()->getStart();
-    auto stmt_info = StmtInfo(
-        {id_start_token->getLine(),
-         node->identifierName()->getStop()->getLine()},
-        {id_start_token->getStartIndex(), id_start_token->getStopIndex()},
-        file_);
+    StmtInfo stmt_info = get_stmt_info(node->identifierName(), file_);
     if (auto search =
             type_scope_->lookup_type(node->identifierName()->getText());
         search.has_value()) {
@@ -67,34 +72,38 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
   }
 };
 
-class RefPhaseWalker final : public ToolmanParserBaseListener {};
-
 class FieldTypeBuilder {
+ public:
   enum class TypeLocation : char { Top, ListElement, MapKey, MapValue };
 
-  void start_type(const std::shared_ptr<Type>& type, TypeLocation type_location) {
-    if (TypeLocation::ListElement == type_location &&
-        type_stack_.top()->is_list()) {
-      auto list_type = std::dynamic_pointer_cast<ListType>(type_stack_.top());
-      list_type->set_elem_type(type);
-    }
+  void set_type_location(TypeLocation type_location) {
+    current_type_location_ = type_location;
+  }
 
-    if (type_stack_.top()->is_map()) {
-      auto map_type = std::dynamic_pointer_cast<MapType>(type_stack_.top());
+  void start_type(const std::shared_ptr<Type>& type) {
+    if (!type_stack_.empty()) {
+      if (type_stack_.top()->is_list()) {
+        if (TypeLocation::ListElement == current_type_location_) {
+          auto list_type =
+              std::dynamic_pointer_cast<ListType>(type_stack_.top());
+          list_type->set_elem_type(type);
+        }
 
-      if (TypeLocation::MapKey == type_location) {
-        // The key of the map must be a primitive type.
-        if (!type->is_primitive()) {
-          errors_.emplace_back(MapKeyTypeMustBePrimitiveError(type));
-        } else {
-          map_type->set_key_type(
+      } else if (type_stack_.top()->is_map()) {
+        auto map_type = std::dynamic_pointer_cast<MapType>(type_stack_.top());
+
+        if (TypeLocation::MapKey == current_type_location_) {
+          // The key of the map must be a primitive type.
+          if (!type->is_primitive()) {
+            errors_.emplace_back(MapKeyTypeMustBePrimitiveError(type));
+          } else {
+            map_type->set_key_type(
+                std::dynamic_pointer_cast<PrimitiveType>(type));
+          }
+        } else if (TypeLocation::MapValue == current_type_location_) {
+          map_type->set_value_type(
               std::dynamic_pointer_cast<PrimitiveType>(type));
         }
-      }
-
-      if (TypeLocation::MapValue == type_location) {
-        map_type->set_value_type(
-            std::dynamic_pointer_cast<PrimitiveType>(type));
       }
     }
 
@@ -105,29 +114,53 @@ class FieldTypeBuilder {
     }
   }
 
+  // If return value is not null-pointer
+  // that means returned is current filed type
   std::shared_ptr<Type> end_map_or_list_type() {
     auto top = type_stack_.top();
     type_stack_.pop();
-    return top;
+    if (type_stack_.empty()) {
+      return top;
+    }
+    return std::shared_ptr<Type>(nullptr);
   }
 
   // Other types besides map and list.
-  std::shared_ptr<Type> end_single_type() { return current_type_; }
+  // If return value is not null-pointer
+  // that means returned is current filed type
+  std::shared_ptr<Type> end_single_type() {
+    if (type_stack_.empty()) {
+      return current_type_;
+    }
+    return std::shared_ptr<Type>(nullptr);
+  }
 
  private:
   std::stack<std::shared_ptr<Type>> type_stack_;
   std::shared_ptr<Type> current_type_;
   std::vector<Error> errors_;
+  TypeLocation current_type_location_ = TypeLocation::Top;
 };
 
 template <typename FIELD, typename CUSTOM_TYPE>
 class CustomTypeBuilder {
  public:
   explicit CustomTypeBuilder(std::shared_ptr<Scope> type_scope)
-      : type_scope_(std::move(type_scope)) {}
-  void append_field(FIELD f) { current_struct_type_->append_field(f); }
+      : type_scope_(std::move(type_scope)), current_field_(std::nullopt) {}
 
-  void start_build_type(const std::string& type_name) {
+  void start_field(FIELD field) {
+    current_field_ = std::optional<FIELD>{field};
+  }
+
+  void set_current_field_type(std::shared_ptr<Type> type) {
+    if (current_field_.has_value()) {
+      current_field_.value().set_type(std::move(type));
+    }
+  }
+
+  void end_field() { current_struct_type_->append_field(current_field_); }
+
+  void start_type(const std::string& type_name) {
     auto search_opt = type_scope_->lookup_type(type_name);
     if (!search_opt.has_value()) {
       // Logically, this situation will not happen
@@ -142,13 +175,136 @@ class CustomTypeBuilder {
     current_struct_type_ = search;
   }
 
+  [[nodiscard]] std::shared_ptr<CUSTOM_TYPE> end_type() const {
+    return current_struct_type_;
+  }
+
  private:
+  std::optional<FIELD> current_field_;
   std::shared_ptr<CUSTOM_TYPE> current_struct_type_;
   std::shared_ptr<Scope> type_scope_;
 };
 
 class LiteralBuilder {
  public:
+};
+
+class RefPhaseWalker final : public ToolmanParserBaseListener {
+ public:
+  RefPhaseWalker(const std::shared_ptr<Scope>& type_scope,
+                 std::shared_ptr<std::string> file)
+      : type_scope_(type_scope),
+        file_(std::move(file)),
+        struct_builder_(type_scope) {}
+  std::unique_ptr<Document> get_document() {
+    return std::unique_ptr<Document>(document_.release());
+  }
+
+  [[nodiscard]] const std::vector<Error>& get_errors() const { return errors_; }
+
+  void enterDocument(ToolmanParser::DocumentContext* node) override {
+    document_ = std::make_unique<Document>();
+  }
+
+  void enterStructField(ToolmanParser::StructFieldContext* node) override {
+    struct_builder_.start_field(
+        Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
+  }
+
+  void enterFieldType(ToolmanParser::FieldTypeContext* node) override {
+    field_type_builder_.set_type_location(FieldTypeBuilder::TypeLocation::Top);
+  }
+
+  void enterListType(ToolmanParser::ListTypeContext* node) override {
+    field_type_builder_.start_type(
+        std::make_shared<ListType>(ListType(get_stmt_info(node, file_))));
+  }
+
+  void exitListType(ToolmanParser::ListTypeContext*) override {
+    if (auto type = field_type_builder_.end_map_or_list_type(); type) {
+      struct_builder_.set_current_field_type(type);
+    }
+  }
+
+  void enterListElementType(ToolmanParser::ListElementTypeContext*) override {
+    field_type_builder_.set_type_location(
+        FieldTypeBuilder::TypeLocation::ListElement);
+  }
+
+  void enterMapType(ToolmanParser::MapTypeContext* node) override {
+    field_type_builder_.start_type(
+        std::make_shared<MapType>(MapType(get_stmt_info(node, file_))));
+  }
+
+  void exitMapType(ToolmanParser::MapTypeContext*) override {
+    if (auto type = field_type_builder_.end_map_or_list_type(); type) {
+      struct_builder_.set_current_field_type(type);
+    }
+  }
+
+  void enterMapKeyType(ToolmanParser::MapKeyTypeContext*) override {
+    field_type_builder_.set_type_location(
+        FieldTypeBuilder::TypeLocation::MapKey);
+  }
+  void enterMapValueType(ToolmanParser::MapValueTypeContext*) override {
+    field_type_builder_.set_type_location(
+        FieldTypeBuilder::TypeLocation::MapKey);
+  }
+
+  void enterPrimitiveType(ToolmanParser::PrimitiveTypeContext* node) override {
+    PrimitiveType::TypeKind type_kind;
+    if (node->Bool() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::Bool;
+    } else if (node->I32() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::I32;
+    } else if (node->U32() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::U32;
+    } else if (node->I64() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::I64;
+    } else if (node->U64() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::U64;
+    } else if (node->Float() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::Float;
+    } else if (node->String() != nullptr) {
+      type_kind = PrimitiveType::TypeKind::String;
+    } else {
+      type_kind = PrimitiveType::TypeKind::Any;
+    }
+    field_type_builder_.start_type(std::make_shared<PrimitiveType>(
+        PrimitiveType(type_kind, get_stmt_info(node, file_))));
+  }
+
+  void exitPrimitiveType(ToolmanParser::PrimitiveTypeContext*) override {
+    if (auto type = field_type_builder_.end_single_type(); type) {
+      struct_builder_.set_current_field_type(type);
+    }
+  }
+
+  void enterCustomTypeName(
+      ToolmanParser::CustomTypeNameContext* node) override {
+    auto custom_type =
+        type_scope_->lookup_type(node->identifierName()->getText());
+    if (!custom_type.has_value()) {
+      errors_.emplace_back(CustomTypeNotFoundError(
+          node->identifierName()->getText(), get_stmt_info(node, file_)));
+      return;
+    }
+    field_type_builder_.start_type(custom_type.value());
+  }
+
+  void exitCustomTypeName(ToolmanParser::CustomTypeNameContext*) override {
+    if (auto type = field_type_builder_.end_single_type(); type) {
+      struct_builder_.set_current_field_type(type);
+    }
+  }
+
+ private:
+  std::unique_ptr<Document> document_;
+  CustomTypeBuilder<Field, StructType> struct_builder_;
+  FieldTypeBuilder field_type_builder_;
+  std::shared_ptr<Scope> type_scope_;
+  std::shared_ptr<std::string> file_;
+  std::vector<Error> errors_;
 };
 
 }  // namespace toolman

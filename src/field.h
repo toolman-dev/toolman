@@ -17,6 +17,11 @@ namespace toolman {
 class Field final : public HasStmtInfo {
  public:
   template <typename S, typename SI>
+  Field(S&& name, SI&& stmt_info)
+      : name_(name),
+        HasStmtInfo(std::forward<SI>(stmt_info)),
+        optional_(false) {}
+  template <typename S, typename SI>
   Field(S&& name, std::shared_ptr<Type> type, bool optional, SI&& stmt_info)
       : type_(std::forward<S>(type)),
         name_(name),
@@ -26,6 +31,8 @@ class Field final : public HasStmtInfo {
   [[nodiscard]] const std::string& get_name() const { return name_; }
 
   [[nodiscard]] bool is_optional() const { return optional_; }
+
+  void set_type(std::shared_ptr<Type> type) { type_ = std::move(type); }
 
  private:
   std::shared_ptr<Type> type_;

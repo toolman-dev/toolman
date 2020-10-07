@@ -22,9 +22,10 @@ class PrimitiveType final : public Type {
     U64,
     Float,
     String,
+    Any,
   };
 
-  template <typename S, typename SI>
+  template <typename SI>
   PrimitiveType(TypeKind type_kind, SI&& stmt_info)
       : Type(type_kind_to_string(type_kind), std::forward<SI>(stmt_info)),
         type_kind_(type_kind) {}
@@ -46,6 +47,8 @@ class PrimitiveType final : public Type {
   [[nodiscard]] bool is_string() const {
     return type_kind_ == TypeKind::String;
   }
+
+  [[nodiscard]] bool is_any() const { return type_kind_ == TypeKind::Any; }
 
   bool operator==(const Type& rhs) const override {
     if (!rhs.is_primitive()) {
@@ -80,6 +83,8 @@ class PrimitiveType final : public Type {
         return "float";
       case PrimitiveType::TypeKind::String:
         return "string";
+      case PrimitiveType::TypeKind::Any:
+        return "any";
     }
   }
 };
