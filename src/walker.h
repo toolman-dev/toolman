@@ -113,9 +113,7 @@ class FieldTypeBuilder {
 
   // Other types besides map and list.
   std::shared_ptr<Type> end_single_type() {
-    auto top = type_stack_.top();
-    type_stack_.pop();
-    return top;
+    return current_type_;
   }
 
  private:
