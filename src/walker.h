@@ -72,7 +72,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {};
 class FieldTypeBuilder {
   enum class TypeLocation : char { Top, ListElement, MapKey, MapValue };
 
-  void start_type(std::shared_ptr<Type> type, TypeLocation type_location) {
+  void start_type(const std::shared_ptr<Type>& type, TypeLocation type_location) {
     if (TypeLocation::ListElement == type_location &&
         type_stack_.top()->is_list()) {
       auto list_type = std::dynamic_pointer_cast<ListType>(type_stack_.top());
