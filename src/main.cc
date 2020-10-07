@@ -5,6 +5,6 @@
 #include <iostream>
 
 int main() {
-    std::cout << "hello toolman" << std::endl;
-    return 0;
+  std::cout << "hello toolman" << std::endl;
+  return 0;
 }

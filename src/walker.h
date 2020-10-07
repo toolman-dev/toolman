@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <optional>
+#include <stack>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,6 +16,8 @@
 #include "src/custom_type.h"
 #include "src/error.h"
 #include "src/field.h"
+#include "src/list_type.h"
+#include "src/map_type.h"
 #include "src/scope.h"
 
 namespace toolman {
@@ -46,6 +49,27 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener {};
+
+class FieldTypeBuilder {
+  void startType(std::shared_ptr<Type> type) {
+    if (type_stack_.top()->is_list()) {
+      auto list_type = std::dynamic_pointer_cast<ListType>(type_stack_.top());
+      list_type->set_elem_type(type);
+    }
+
+    if (type_stack_.top()->is_map()) {
+      auto map_type = std::dynamic_pointer_cast<MapType>(type_stack_.top());
+    }
+
+    if (type->is_map() || type->is_list()) {
+      type_stack_.push(type);
+      return;
+    }
+  }
+
+ private:
+  std::stack<std::shared_ptr<Type>> type_stack_;
+};
 
 }  // namespace toolman
 

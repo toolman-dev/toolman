@@ -36,6 +36,9 @@ class Type : public HasStmtInfo {
       : name_(std::forward<S>(name)),
         HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
+  template <typename SI>
+  explicit Type(SI&& stmt_info) : HasStmtInfo(std::forward<SI>(stmt_info)) {}
+
   std::string name_;
 };
 

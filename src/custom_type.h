@@ -24,6 +24,10 @@ class CustomType : public Type {
       : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
         is_public_(is_public) {}
 
+  template <typename SI>
+  CustomType(SI&& stmt_info, bool is_public)
+      : Type(std::forward<SI>(stmt_info)), is_public_(is_public) {}
+
   bool append_field(F f) {
     // returns false when there is a conflict of field names
     if (get_field_by_name(f.get_name()).has_value()) {

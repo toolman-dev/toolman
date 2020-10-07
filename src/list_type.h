@@ -15,10 +15,12 @@ namespace toolman {
 
 class ListType final : public Type {
  public:
-  template <typename S, typename SI>
-  ListType(S&& name, std::shared_ptr<Type> elem_type, SI&& stmt_info)
-      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
-        elem_type_(std::move(elem_type)) {}
+  template <typename SI>
+  ListType(SI&& stmt_info) : Type(std::forward<SI>(stmt_info)) {}
+
+  template <typename SI>
+  ListType(std::shared_ptr<Type> elem_type, SI&& stmt_info)
+      : Type(std::forward<SI>(stmt_info)), elem_type_(std::move(elem_type)) {}
 
   [[nodiscard]] const std::shared_ptr<Type>& get_elem_type() const {
     return elem_type_;
@@ -28,6 +30,10 @@ class ListType final : public Type {
 
   [[nodiscard]] std::string to_string() const override {
     return "[" + elem_type_->to_string() + "]";
+  }
+
+  void set_elem_type(std::shared_ptr<Type> elem_type) {
+    elem_type_ = elem_type;
   }
 
  private:

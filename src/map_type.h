@@ -19,10 +19,13 @@ class MapType final : public Type {
   using KeyType = PrimitiveType;
   using ValueType = Type;
 
-  template <typename S, typename SI>
-  MapType(S&& name, std::shared_ptr<PrimitiveType> key_type,
+  template <typename SI>
+  MapType(SI&& stmt_info) : Type(std::forward<SI>(stmt_info)) {}
+
+  template <typename SI>
+  MapType(std::shared_ptr<PrimitiveType> key_type,
           std::shared_ptr<Type> value_type, SI&& stmt_info)
-      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
+      : Type(std::forward<SI>(stmt_info)),
         key_type_(std::move(key_type)),
         value_type_(std::move(value_type)) {}
 
@@ -38,6 +41,12 @@ class MapType final : public Type {
 
   [[nodiscard]] std::string to_string() const override {
     return "{" + key_type_->to_string() + ", " + value_type_->to_string() + "}";
+  }
+
+  void set_key_type(std::shared_ptr<KeyType> key_type) { key_type_ = key_type; }
+
+  void set_value_type(std::shared_ptr<ValueType> value_type) {
+    value_type_ = value_type;
   }
 
  private:
