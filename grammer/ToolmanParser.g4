@@ -50,12 +50,16 @@ type_:
 baseType: String | I32 | I64 | U32 | U64 | Float | Bool;
 
 // [SomeType]
-listType: OpenBracket elementType CloseBracket;
+listType: OpenBracket listElementType CloseBracket;
 
 // {keyType: valueType}
-mapType: OpenBrace baseType Colon elementType CloseBrace;
+mapType: OpenBrace mapKeyType Colon mapValueType CloseBrace;
 
-elementType: type_;
+listElementType: type_;
+
+mapKeyType: type_;
+
+mapValueType: type_;
 
 // (fieldName: SomeType|fieldName: OtherType)
 oneofType: OpenParen structField (Or structField)+ CloseParen;

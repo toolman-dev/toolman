@@ -69,6 +69,14 @@ class FieldTypeMismatchError final : public Error {
   StmtInfo literal_stmt_info_;
 };
 
+class MapKeyTypeMustBePrimitiveError final : public Error {
+ public:
+  MapKeyTypeMustBePrimitiveError(std::shared_ptr<Type> key_type)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "The key of the map must be a primitive type. give " +
+                  key_type->to_string()) {}
+};
+
 }  // namespace toolman
 
 #endif  // TOOLMAN_ERROR_H_

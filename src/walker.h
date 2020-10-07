@@ -70,30 +70,64 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
 class RefPhaseWalker final : public ToolmanParserBaseListener {};
 
 class FieldTypeBuilder {
-  void startType(std::shared_ptr<Type> type) {
-    if (type_stack_.top()->is_list()) {
+  enum class TypeLocation : char { Top, ListElement, MapKey, MapValue };
+
+  void start_type(std::shared_ptr<Type> type, TypeLocation type_location) {
+    if (TypeLocation::ListElement == type_location &&
+        type_stack_.top()->is_list()) {
       auto list_type = std::dynamic_pointer_cast<ListType>(type_stack_.top());
       list_type->set_elem_type(type);
     }
 
     if (type_stack_.top()->is_map()) {
       auto map_type = std::dynamic_pointer_cast<MapType>(type_stack_.top());
+
+      if (TypeLocation::MapKey == type_location) {
+        // The key of the map must be a primitive type.
+        if (!type->is_primitive()) {
+          errors_.emplace_back(MapKeyTypeMustBePrimitiveError(type));
+        } else {
+          map_type->set_key_type(
+              std::dynamic_pointer_cast<PrimitiveType>(type));
+        }
+      }
+
+      if (TypeLocation::MapValue == type_location) {
+        map_type->set_value_type(
+            std::dynamic_pointer_cast<PrimitiveType>(type));
+      }
     }
 
     if (type->is_map() || type->is_list()) {
       type_stack_.push(type);
-      return;
+    } else {
+      current_type_ = type;
     }
+  }
+
+  std::shared_ptr<Type> end_map_or_list_type() {
+    auto top = type_stack_.top();
+    type_stack_.pop();
+    return top;
+  }
+
+  // Other types besides map and list.
+  std::shared_ptr<Type> end_single_type() {
+    auto top = type_stack_.top();
+    type_stack_.pop();
+    return top;
   }
 
  private:
   std::stack<std::shared_ptr<Type>> type_stack_;
+  std::shared_ptr<Type> current_type_;
+  std::vector<Error> errors_;
 };
 
 template <typename FIELD, typename CUSTOM_TYPE>
 class CustomTypeBuilder {
  public:
-  CustomTypeBuilder(std::shared_ptr<Scope> type_scope)
+  explicit CustomTypeBuilder(std::shared_ptr<Scope> type_scope)
       : type_scope_(std::move(type_scope)) {}
   void append_field(FIELD f) { current_struct_type_->append_field(f); }
 
