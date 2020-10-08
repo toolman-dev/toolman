@@ -26,6 +26,7 @@ class Literal : public HasStmtInfo {
   [[nodiscard]] virtual bool is_primitive() const { return false; }
   [[nodiscard]] virtual bool is_list() const { return false; }
   [[nodiscard]] virtual bool is_map() const { return false; }
+    virtual ~Literal() = default;
 };
 
 class PrimitiveLiteral final : public Literal {

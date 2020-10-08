@@ -29,27 +29,23 @@ int main(int, char **) {
     antlr4::tree::ParseTree *tree = parser.document();
 
     antlr4::tree::ParseTreeWalker walker;
-    auto *def_phase_walker =
-        new DeclPhaseWalker(std::make_shared<std::string>(filename));
+    auto def_phase_walker =
+        std::make_unique<DeclPhaseWalker>(std::make_shared<std::string>(filename));
 
-    walker.walk(def_phase_walker, tree);
+    walker.walk(def_phase_walker.get(), tree);
 
     for (const auto &error : def_phase_walker->get_errors()) {
       std::cout << error.error() << std::endl << std::endl;
     }
 
-    auto *ref_phase_walker =
-        new RefPhaseWalker(def_phase_walker->get_type_scope(),
+    auto ref_phase_walker =
+        std::make_unique<RefPhaseWalker>(def_phase_walker->get_type_scope(),
                            std::make_shared<std::string>(filename));
 
-    delete def_phase_walker;
-
-    walker.walk(ref_phase_walker, tree);
+    walker.walk(ref_phase_walker.get(), tree);
     for (const auto &error : ref_phase_walker->get_errors()) {
       std::cout << error.error() << std::endl << std::endl;
     }
-
-    delete ref_phase_walker;
 
     std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
   }

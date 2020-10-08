@@ -41,9 +41,9 @@ enumDecl:
 type_:
 	(String | I32 | I64 | U32 | U64 | Float | Bool | Any)	# PrimitiveType
 	// [SomeType]
-	| OpenBracket listElementType CloseBracket              # ListType
+	| OpenBracket listElementType CloseBracket				# ListType
 	// {keyType: valueType}
-	| OpenBrace mapKeyType Colon mapValueType CloseBrace    # MapType
+	| OpenBrace mapKeyType Colon mapValueType CloseBrace	# MapType
 	// (fieldName: SomeType|fieldName: OtherType)
 	| OpenParen structField (Or structField)+ CloseParen	# OneofType
 	| identifierName										# CustomTypeName;
@@ -60,8 +60,10 @@ structFieldList: structField (Comma structField)*;
 
 structField:
 	identifierName Colon fieldType QuestionMark? (
-		Assign (literal | enumItem)
+		Assign structFieldInit
 	)?;
+
+structFieldInit: literal | enumItem;
 
 enumFieldList: enumField (Comma enumField)*;
 
@@ -94,7 +96,10 @@ keyword:
 
 literal: primitiveLiteral | listLiteral | mapLiteral;
 
-primitiveLiteral: BooleanLiteral | StringLiteral | numericLiteral;
+primitiveLiteral:
+	BooleanLiteral
+	| StringLiteral
+	| numericLiteral;
 
 intgerLiteral:
 	DecIntegerLiteral
