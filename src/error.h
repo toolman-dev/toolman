@@ -71,7 +71,7 @@ class FieldTypeMismatchError final : public Error {
 
 class MapKeyTypeMustBePrimitiveError final : public Error {
  public:
-  explicit MapKeyTypeMustBePrimitiveError(std::shared_ptr<Type> key_type)
+  explicit MapKeyTypeMustBePrimitiveError(const std::shared_ptr<Type>& key_type)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "The key of the map must be a primitive type. give " +
                   key_type->to_string()) {}
