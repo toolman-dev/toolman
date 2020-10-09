@@ -37,6 +37,8 @@ class CustomType : public Type {
     return true;
   }
 
+  [[nodiscard]] std::vector<F> get_fields() const { return fields_; }
+
   [[nodiscard]] std::optional<F> get_field_by_name(
       const std::string& field_name) const {
     for (const auto& f : fields_) {
