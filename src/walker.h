@@ -111,7 +111,7 @@ class FieldTypeBuilder {
     if (type->is_map() || type->is_list()) {
       type_stack_.push(type);
     } else {
-        current_single_type_ = type;
+      current_single_type_ = type;
     }
   }
 
