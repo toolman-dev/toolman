@@ -13,7 +13,10 @@
 #include "src/scope.h"
 #include "src/walker.h"
 
-using namespace toolman;
+using toolman::DeclPhaseWalker;
+using toolman::RefPhaseWalker;
+using toolman::ToolmanLexer;
+using toolman::ToolmanParser;
 
 int main(int, char **) {
   std::string filename = "/Users/ty/Desktop/toolman_examples.tm";
