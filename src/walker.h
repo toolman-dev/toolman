@@ -189,6 +189,20 @@ class LiteralBuilder {
  public:
   enum class LiteralLocation : char { Top, ListElement, MapKey, MapValue };
   void start_literal(std::unique_ptr<Literal> literal) {
+    if (type_stack_.empty()) {
+      // todo abnormal situation
+    }
+
+    auto current_type = type_stack_.top();
+    if (current_type->is_map() && !literal->is_map()) {
+    }
+
+    if ((current_type->is_list() && !literal->is_list()) ||
+        (current_type->is_map() && !literal->is_map()) ||
+        (current_type->is_primitive() && !literal->is_primitive())) {
+      throw LiteralElementTypeMismatchError(current_type, literal);
+    }
+
     if (!literal_stack_.empty()) {
       const auto& top = literal_stack_.top();
       if (top->is_list()) {
@@ -256,13 +270,12 @@ class LiteralBuilder {
   }
 
   void set_current_literal_type(std::shared_ptr<Type> current_literal_type) {
-    current_literal_type_ = current_literal_type;
+    type_stack_.push(current_literal_type);
   }
 
  private:
   std::stack<std::unique_ptr<Literal>> literal_stack_;
   std::stack<std::shared_ptr<Type>> type_stack_;
-  std::unique_ptr<PrimitiveLiteral> current_map_key_literal_;
   std::unique_ptr<Literal> current_single_literal_;
   LiteralLocation current_literal_location_ = LiteralLocation::Top;
   std::shared_ptr<Type> current_literal_type_;

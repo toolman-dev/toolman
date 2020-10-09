@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "src/literal.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
@@ -17,8 +18,6 @@ class Error {
  public:
   enum class ErrorType : char { Lexer, Syntax, Semantic };
   enum class Level : char { Note, Warning, Fatal };
-
-  Error(ErrorType type, Level level) : type_(type), level_(level) {}
 
   template <typename S>
   Error(ErrorType type, Level level, S&& message)
@@ -50,10 +49,17 @@ class DuplicateDeclError final : public Error {
 
 class LiteralElementTypeMismatchError final : public Error {
  public:
-  template <typename S, typename SI>
-  LiteralElementTypeMismatchError(S&& message, SI&& stmt_info)
+  LiteralElementTypeMismatchError(std::shared_ptr<Type> expected_type,
+                                  std::unique_ptr<Literal> actual_literal)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
-              std::forward<S>(message), std::forward<SI>(stmt_info)) {}
+              "mismatched types. expected `" + expected_type->to_string() +
+                  "`, found " + actual_literal->to_string()),
+        expected_type_(expected_type),
+        actual_literal_(actual_literal) {}
+
+ private:
+  std::shared_ptr<Type> expected_type_;
+  std::unique_ptr<Literal> actual_literal_;
 };
 
 class FieldTypeMismatchError final : public Error {
