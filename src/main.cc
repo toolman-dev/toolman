@@ -30,20 +30,20 @@ int main(int, char **) {
 
     antlr4::tree::ParseTreeWalker walker;
     auto def_phase_walker =
-        std::make_unique<DeclPhaseWalker>(std::make_shared<std::string>(filename));
+        DeclPhaseWalker(std::make_shared<std::string>(filename));
 
-    walker.walk(def_phase_walker.get(), tree);
+    walker.walk(&def_phase_walker, tree);
 
-    for (const auto &error : def_phase_walker->get_errors()) {
+    for (const auto &error : def_phase_walker.get_errors()) {
       std::cout << error.error() << std::endl << std::endl;
     }
 
     auto ref_phase_walker =
-        std::make_unique<RefPhaseWalker>(def_phase_walker->get_type_scope(),
-                           std::make_shared<std::string>(filename));
+        RefPhaseWalker(def_phase_walker.get_type_scope(),
+                       std::make_shared<std::string>(filename));
 
-    walker.walk(ref_phase_walker.get(), tree);
-    for (const auto &error : ref_phase_walker->get_errors()) {
+    walker.walk(&ref_phase_walker, tree);
+    for (const auto &error : ref_phase_walker.get_errors()) {
       std::cout << error.error() << std::endl << std::endl;
     }
 
