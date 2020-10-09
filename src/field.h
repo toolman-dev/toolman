@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "src/literal.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
@@ -34,10 +35,17 @@ class Field final : public HasStmtInfo {
 
   void set_type(std::shared_ptr<Type> type) { type_ = std::move(type); }
 
+  std::shared_ptr<Type> get_type() { return type_; }
+
+  void set_literal(std::unique_ptr<Literal> literal) {
+    literal_ = std::unique_ptr<Literal>(literal.release());
+  }
+
  private:
   std::shared_ptr<Type> type_;
   std::string name_;
   bool optional_;
+  std::unique_ptr<Literal> literal_;
 };
 
 }  // namespace toolman

@@ -26,7 +26,7 @@ class Literal : public HasStmtInfo {
   [[nodiscard]] virtual bool is_primitive() const { return false; }
   [[nodiscard]] virtual bool is_list() const { return false; }
   [[nodiscard]] virtual bool is_map() const { return false; }
-    virtual ~Literal() = default;
+  virtual ~Literal() = default;
 };
 
 class PrimitiveLiteral final : public Literal {
@@ -58,6 +58,9 @@ class PrimitiveLiteral final : public Literal {
 class MapLiteral final : public Literal {
  public:
   template <typename SI>
+  MapLiteral(SI&& stmt_info) : HasStmtInfo(std::forward<SI>(stmt_info)) {}
+
+  template <typename SI>
   MapLiteral(std::shared_ptr<MapType> type, SI&& stmt_info)
       : HasStmtInfo(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
 
@@ -70,9 +73,12 @@ class MapLiteral final : public Literal {
   [[nodiscard]] std::shared_ptr<Type> get_type() const override {
     return type_;
   }
+
   [[nodiscard]] const std::shared_ptr<MapType>& get_map_type() const {
     return type_;
   }
+
+  void set_map_type(std::shared_ptr<MapType> map_type) { type_ = map_type; }
 
   [[nodiscard]] const std::map<PrimitiveLiteral, std::unique_ptr<Literal>>&
   get_value() const {
@@ -88,6 +94,9 @@ class MapLiteral final : public Literal {
 
 class ListLiteral final : public Literal {
  public:
+  template <typename SI>
+  ListLiteral(SI&& stmt_info) : Literal(std::forward<SI>(stmt_info)) {}
+
   template <typename SI>
   ListLiteral(std::shared_ptr<ListType> type, SI&& stmt_info)
       : Literal(std::forward<SI>(stmt_info)), type_(std::move(type)) {}
@@ -108,6 +117,8 @@ class ListLiteral final : public Literal {
     return value_;
   }
   [[nodiscard]] bool is_list() const override { return true; }
+
+  void set_list_type(std::shared_ptr<ListType> list_type) { type_ = list_type; }
 
  private:
   std::shared_ptr<ListType> type_;
