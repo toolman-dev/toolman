@@ -29,7 +29,18 @@ class GolangGenerator : public Generator {
     code << "}";
   }
 
-  void generate_enum(const EnumType& enum_type) override {}
+  void generate_enum(const EnumType& enum_type) override {
+    std::stringstream code;
+
+    auto capitalized_name = capitalize(enum_type.get_name());
+    code << "type " << capitalized_name << "int32" << std::endl;
+    code << "const (" << std::endl;
+    for (const auto& field : enum_type.get_fields()) {
+      code << capitalized_name << "_" << field.get_name() << " "
+           << capitalized_name << " = " << field.get_value() << std::endl;
+    }
+    code << ")" << std::endl;
+  }
 
  private:
   std::string capitalize(std::string in) const {
@@ -62,11 +73,8 @@ class GolangGenerator : public Generator {
       } else if (primitive->is_any()) {
         return "interface{}";
       }
-    } else if (type->is_struct()) {
+    } else if (type->is_struct() || type->is_enum()) {
       return capitalize(type->get_name());
-    } else if (type->is_enum()) {
-      // todo enum
-      return "";
     } else if (type->is_list()) {
       auto list = std::dynamic_pointer_cast<ListType>(type);
       return "[]" + type_to_go_type(list->get_elem_type());
