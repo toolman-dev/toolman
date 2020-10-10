@@ -30,6 +30,8 @@ class Field final : public HasStmtInfo {
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
 
+  [[nodiscard]] const std::shared_ptr<Type>& get_type() const { return type_; }
+
   [[nodiscard]] bool is_optional() const { return optional_; }
 
   void set_type(std::shared_ptr<Type> type) { type_ = std::move(type); }
