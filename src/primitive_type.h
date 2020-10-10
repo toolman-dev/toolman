@@ -44,6 +44,19 @@ class PrimitiveType final : public Type {
 
   [[nodiscard]] bool is_float() const { return type_kind_ == TypeKind::Float; }
 
+  [[nodiscard]] bool is_numeric() const {
+    switch (type_kind_) {
+      case TypeKind::I32:
+      case TypeKind::I64:
+      case TypeKind::U32:
+      case TypeKind::U64:
+      case TypeKind::Float:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   [[nodiscard]] bool is_string() const {
     return type_kind_ == TypeKind::String;
   }

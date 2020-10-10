@@ -18,7 +18,6 @@
 #include "src/error.h"
 #include "src/field.h"
 #include "src/list_type.h"
-#include "src/literal.h"
 #include "src/map_type.h"
 #include "src/scope.h"
 
@@ -148,18 +147,12 @@ class StructTypeBuilder {
   StructTypeBuilder() : current_field_(std::nullopt) {}
 
   void start_field(FIELD field) {
-    current_field_ = std::optional<FIELD>{field};
+    current_field_ = std::optional<FIELD>(std::move(field));
   }
 
   void set_current_field_type(std::shared_ptr<Type> type) {
     if (current_field_.has_value()) {
       current_field_.value().set_type(std::move(type));
-    }
-  }
-
-  void set_current_filed_literal(std::unique_ptr<Literal> literal) {
-    if (current_field_.has_value()) {
-      current_field_.value().set_literal(literal);
     }
   }
 
@@ -183,102 +176,6 @@ class StructTypeBuilder {
  private:
   std::optional<FIELD> current_field_;
   std::shared_ptr<StructType> current_struct_type_;
-};
-
-class LiteralBuilder {
- public:
-  enum class LiteralLocation : char { Top, ListElement, MapKey, MapValue };
-  void start_literal(std::unique_ptr<Literal> literal) {
-    if (type_stack_.empty()) {
-      // todo abnormal situation
-    }
-
-    auto current_type = type_stack_.top();
-    if (current_type->is_map() && !literal->is_map()) {
-    }
-
-    if ((current_type->is_list() && !literal->is_list()) ||
-        (current_type->is_map() && !literal->is_map()) ||
-        (current_type->is_primitive() && !literal->is_primitive())) {
-      throw LiteralElementTypeMismatchError(current_type, literal);
-    }
-
-    if (!literal_stack_.empty()) {
-      const auto& top = literal_stack_.top();
-      if (top->is_list()) {
-        if (LiteralLocation::ListElement == current_literal_location_) {
-          auto list_literal = dynamic_cast<ListLiteral*>(top.get());
-          list_literal->insert(literal);
-        }
-
-      } else if (top->is_map()) {
-        if (LiteralLocation::MapKey == current_literal_location_) {
-          // The map key must be a primitive type.
-          if (!literal->is_primitive()) {
-            // todo
-            //                          throw
-            //                          MapKeyTypeMustBePrimitiveError(type);
-          } else {
-            // In this branch the the `literal` must be `PrimitiveLiteral`.
-            // the dynamic_cast Won't fail. so `literal.release()` may not leak
-            // memory.
-            current_map_key_literal_ = std::unique_ptr<PrimitiveLiteral>(
-                dynamic_cast<PrimitiveLiteral*>(literal.release()));
-            return;
-          }
-        } else if (LiteralLocation::MapValue == current_literal_location_) {
-          if (current_map_key_literal_) {
-            auto map_literal = dynamic_cast<MapLiteral*>(top.get());
-            map_literal->insert(
-                std::make_pair(std::unique_ptr<PrimitiveLiteral>(
-                                   current_map_key_literal_.release()),
-                               std::unique_ptr<Literal>(literal.release())));
-          }
-        }
-      }
-    }
-    if (literal->is_map() || literal->is_list()) {
-      literal_stack_.push(std::unique_ptr<Literal>(literal.release()));
-    } else {
-      current_single_literal_ = std::unique_ptr<Literal>(literal.release());
-    }
-  }
-
-  void set_current_literal_location(LiteralLocation literal_location) {
-    current_literal_location_ = literal_location;
-  }
-
-  // If return value is not null-pointer
-  // that means returned is current filed init literal
-  std::unique_ptr<Literal> end_map_or_list_literal() {
-    auto top = std::unique_ptr<Literal>(literal_stack_.top().release());
-    literal_stack_.pop();
-    if (literal_stack_.empty()) {
-      return top;
-    }
-    return std::unique_ptr<Literal>(nullptr);
-  }
-
-  // Other types besides map and list.
-  // If return value is not null-pointer
-  // that means returned is current filed init literal
-  std::unique_ptr<Literal> end_single_literal() {
-    if (literal_stack_.empty()) {
-      return std::unique_ptr<Literal>(current_single_literal_.release());
-    }
-    return std::unique_ptr<Literal>(nullptr);
-  }
-
-  void set_current_literal_type(std::shared_ptr<Type> current_literal_type) {
-    type_stack_.push(current_literal_type);
-  }
-
- private:
-  std::stack<std::unique_ptr<Literal>> literal_stack_;
-  std::stack<std::shared_ptr<Type>> type_stack_;
-  std::unique_ptr<Literal> current_single_literal_;
-  LiteralLocation current_literal_location_ = LiteralLocation::Top;
-  std::shared_ptr<Type> current_literal_type_;
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener {
@@ -411,66 +308,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     }
   }
 
-  void enterStructFieldInit(ToolmanParser::StructFieldInitContext*) override {
-    literal_builder_.set_current_literal_location(
-        LiteralBuilder::LiteralLocation::Top);
-  }
-
-  void enterStructFieldInitListLiteral(
-      ToolmanParser::StructFieldInitListLiteralContext* node) override {
-    auto current_type = struct_builder_.get_current_type();
-    if (current_type && current_type->is_list()) {
-      auto literal_pointer =
-          new ListLiteral(std::dynamic_pointer_cast<ListType>(current_type),
-                          get_stmt_info(node, file_));
-      literal_builder_.start_literal(
-          std::unique_ptr<Literal>(dynamic_cast<Literal*>(literal_pointer)));
-    } else {
-      // todo abnormal situation
-    }
-  }
-  void exitStructFieldInitListLiteral(
-      ToolmanParser::StructFieldInitListLiteralContext*) override {
-    if (auto literal = literal_builder_.end_map_or_list_literal(); literal) {
-      struct_builder_.set_current_filed_literal(
-          std::unique_ptr<Literal>(literal.release()));
-    }
-  }
-
-  void enterStructFieldInitMapLiteral(
-      ToolmanParser::StructFieldInitListLiteralContext*) override {
-    auto current_type = struct_builder_.get_current_type();
-    if (current_type && current_type->is_map()) {
-      auto literal_pointer =
-          new MapLiteral(std::dynamic_pointer_cast<MapType>(current_type),
-                         get_stmt_info(node, file_));
-      literal_builder_.start_literal(
-          std::unique_ptr<Literal>(dynamic_cast<Literal*>(literal_pointer)));
-    } else {
-      // todo abnormal situation
-    }
-  }
-
-  void exitStructFieldInitMapLiteral(
-      ToolmanParser::StructFieldInitMapLiteralContext*) override {
-    if (auto literal = literal_builder_.end_map_or_list_literal(); literal) {
-      struct_builder_.set_current_filed_literal(
-          std::unique_ptr<Literal>(literal.release()));
-    }
-  }
-
-  void enterStructFieldInitPrimitiveLiteral(
-      ToolmanParser::StructFieldInitPrimitiveLiteralContext* node) override {
-    auto current_field_type = struct_builder_.get_current_field_type();
-
-    literal_builder_.start_literal();
-  }
-
  private:
   std::unique_ptr<Document> document_;
   StructTypeBuilder<Field> struct_builder_;
   FieldTypeBuilder field_type_builder_;
-  LiteralBuilder literal_builder_;
   std::shared_ptr<Scope> type_scope_;
   std::shared_ptr<std::string> file_;
   std::vector<Error> errors_;
