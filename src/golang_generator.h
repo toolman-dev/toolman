@@ -17,29 +17,28 @@
 namespace toolman {
 class GolangGenerator : public Generator {
  public:
-  void generate_struct(const StructType& struct_type) override {
-    std::stringstream code;
-    code << "type " << struct_type.get_name() << "struct {" << std::endl;
+  void generate_struct(std::ostream& ostream,
+                       const StructType& struct_type) const override {
+    ostream << "type " << struct_type.get_name() << "struct {" << std::endl;
 
     for (const auto& field : struct_type.get_fields()) {
-      code << capitalize(field.get_name()) << " "
-           << type_to_go_type(field.get_type())
-           << " `json:\"" + field.get_name() + "\"`" << std::endl;
+      ostream << capitalize(field.get_name()) << " "
+              << type_to_go_type(field.get_type())
+              << " `json:\"" + field.get_name() + "\"`" << std::endl;
     }
-    code << "}";
+    ostream << "}";
   }
 
-  void generate_enum(const EnumType& enum_type) override {
-    std::stringstream code;
-
+  void generate_enum(std::ostream& ostream,
+                     const EnumType& enum_type) const override {
     auto capitalized_name = capitalize(enum_type.get_name());
-    code << "type " << capitalized_name << "int32" << std::endl;
-    code << "const (" << std::endl;
+    ostream << "type " << capitalized_name << "int32" << std::endl;
+    ostream << "const (" << std::endl;
     for (const auto& field : enum_type.get_fields()) {
-      code << capitalized_name << "_" << field.get_name() << " "
-           << capitalized_name << " = " << field.get_value() << std::endl;
+      ostream << capitalized_name << "_" << field.get_name() << " "
+              << capitalized_name << " = " << field.get_value() << std::endl;
     }
-    code << ")" << std::endl;
+    ostream << ")" << std::endl;
   }
 
  private:
