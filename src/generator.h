@@ -5,7 +5,7 @@
 #ifndef TOOLMAN_GENERATOR_H_
 #define TOOLMAN_GENERATOR_H_
 
-#include "document.h"
+#include "src/document.h"
 #include "src/custom_type.h"
 
 namespace toolman {
