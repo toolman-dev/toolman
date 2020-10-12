@@ -29,18 +29,10 @@ Doublecolon: '::';
 Ellipsis: '...';
 Or: '|';
 
-/// Boolean Literals
-
-BooleanLiteral: 'true' | 'false';
 
 /// Numeric Literals
 
 DecIntegerLiteral: DecimalIntegerLiteral;
-
-DecimalLiteral:
-	DecimalIntegerLiteral '.' [0-9]* ExponentPart?
-	| '.' [0-9]+ ExponentPart?
-	| DecimalIntegerLiteral ExponentPart?;
 
 HexIntegerLiteral: '0' [xX] HexDigit+;
 OctalIntegerLiteral: '0' [oO] [0-7]+;
@@ -126,7 +118,6 @@ fragment EscapeCharacter: SingleEscapeCharacter | [0-9] | [xu];
 fragment LineContinuation: '\\' [\r\n\u2028\u2029];
 fragment HexDigit: [0-9a-fA-F];
 fragment DecimalIntegerLiteral: '0' | [1-9] [0-9]*;
-fragment ExponentPart: [eE] [+-]? [0-9]+;
 fragment IdentifierPart:
 	IdentifierStart
 	| UnicodeCombiningMark

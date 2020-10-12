@@ -70,7 +70,7 @@ enumItem: identifierName Doublecolon identifierName;
 
 identifierName: Identifier | reservedWord;
 
-reservedWord: keyword | BooleanLiteral;
+reservedWord: keyword;
 
 keyword:
 	Struct

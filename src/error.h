@@ -46,7 +46,6 @@ class DuplicateDeclError final : public Error {
   StmtInfo duplicate_decl_stmt_info_;
 };
 
-
 class MapKeyTypeMustBePrimitiveError final : public Error {
  public:
   explicit MapKeyTypeMustBePrimitiveError(const std::shared_ptr<Type>& key_type)
