@@ -19,7 +19,10 @@ class GolangGenerator : public Generator {
  public:
   void generate_struct(std::ostream& ostream,
                        const StructType& struct_type) const override {
-    ostream << "type " << struct_type.get_name() << "struct {" << std::endl;
+    ostream << "type "
+            << (struct_type.is_public() ? capitalize(struct_type.get_name())
+                                        : struct_type.get_name())
+            << "struct {" << std::endl;
 
     for (const auto& field : struct_type.get_fields()) {
       ostream << capitalize(field.get_name()) << " "
@@ -32,7 +35,9 @@ class GolangGenerator : public Generator {
   void generate_enum(std::ostream& ostream,
                      const EnumType& enum_type) const override {
     auto capitalized_name = capitalize(enum_type.get_name());
-    ostream << "type " << capitalized_name << "int32" << std::endl;
+    ostream << "type "
+            << (enum_type.is_public() ? capitalized_name : enum_type.get_name())
+            << "int32" << std::endl;
     ostream << "const (" << std::endl;
     for (const auto& field : enum_type.get_fields()) {
       ostream << capitalized_name << "_" << field.get_name() << " "

@@ -5,8 +5,8 @@
 #ifndef TOOLMAN_GENERATOR_H_
 #define TOOLMAN_GENERATOR_H_
 
-#include "src/document.h"
 #include "src/custom_type.h"
+#include "src/document.h"
 
 namespace toolman {
 class Generator {
