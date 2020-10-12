@@ -112,8 +112,9 @@ class StructTypeBuilder {
     }
   }
 
-  void end_field() {
+  void end_field(bool optional) {
     if (current_field_.has_value()) {
+      current_field_.value().set_optional(optional);
       if (!current_struct_type_->append_field(current_field_.value())) {
         auto current_field = current_field_.value();
         throw FieldDuplicateDeclError(
@@ -186,8 +187,12 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     struct_builder_.start_field(
         Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
   }
-  void exitStructField(ToolmanParser::StructFieldContext*) override {
-    struct_builder_.end_field();
+  void exitStructField(ToolmanParser::StructFieldContext* node) override {
+    try {
+      struct_builder_.end_field(node->QuestionMark() != nullptr);
+    } catch (FieldDuplicateDeclError& e) {
+      errors_.emplace_back(e);
+    }
   }
 
   void enterFieldType(ToolmanParser::FieldTypeContext* node) override {

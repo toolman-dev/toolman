@@ -34,6 +34,7 @@ class GolangGenerator : public Generator {
 
     for (const auto& field : struct_type->get_fields()) {
       ostream << "  " << capitalize(field.get_name()) << " "
+              << (field.is_optional() ? "*" : "")
               << type_to_go_type(field.get_type())
               << " `json:\"" + field.get_name() + "\"`" << NL;
     }
