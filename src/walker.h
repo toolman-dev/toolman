@@ -176,6 +176,9 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     struct_builder_.start_field(
         Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
   }
+  void exitStructField(ToolmanParser::StructFieldContext *) override {
+      struct_builder_.end_field();
+  }
 
   void enterFieldType(ToolmanParser::FieldTypeContext* node) override {
     field_type_builder_.set_type_location(FieldTypeBuilder::TypeLocation::Top);
