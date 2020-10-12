@@ -37,7 +37,7 @@ class GolangGenerator : public Generator {
               << type_to_go_type(field.get_type())
               << " `json:\"" + field.get_name() + "\"`" << NL;
     }
-    ostream << "}"<< NL;
+    ostream << "}" << NL;
   }
 
   void generate_enum(
@@ -67,7 +67,8 @@ class GolangGenerator : public Generator {
     return in;
   }
 
-  [[nodiscard]] static std::string type_to_go_type(const std::shared_ptr<Type>& type) {
+  [[nodiscard]] static std::string type_to_go_type(
+      const std::shared_ptr<Type>& type) {
     if (type->is_primitive()) {
       auto primitive = std::dynamic_pointer_cast<PrimitiveType>(type);
       if (primitive->is_bool()) {

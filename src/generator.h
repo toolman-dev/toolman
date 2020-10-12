@@ -41,7 +41,7 @@ class Generator {
       generate_enum(ostream, enum_type);
     }
     after_generate_enum(ostream);
-      ostream<< std::flush;
+    ostream << std::flush;
   }
 };
 }  // namespace toolman

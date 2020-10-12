@@ -62,7 +62,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
     if (auto search =
             type_scope_->lookup_type(node->identifierName()->getText());
         search.has_value()) {
-      errors_.emplace_back(DuplicateDeclError(search.value(), stmt_info));
+      errors_.emplace_back(TypeDuplicateDeclError(search.value(), stmt_info));
       return;
     } else {
       type_scope_->declare(std::make_shared<DECL_TYPE>(
@@ -114,7 +114,13 @@ class StructTypeBuilder {
 
   void end_field() {
     if (current_field_.has_value()) {
-      current_struct_type_->append_field(current_field_.value());
+      if (!current_struct_type_->append_field(current_field_.value())) {
+        auto current_field = current_field_.value();
+        throw FieldDuplicateDeclError(
+            current_struct_type_->get_field_by_name(current_field.get_name())
+                .value(),
+            current_field.get_stmt_info());
+      }
     }
   }
 

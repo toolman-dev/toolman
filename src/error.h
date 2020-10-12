@@ -30,11 +30,11 @@ class Error {
   std::string message_;
 };
 
-class DuplicateDeclError final : public Error {
+class TypeDuplicateDeclError final : public Error {
  public:
   template <typename SI>
-  DuplicateDeclError(std::shared_ptr<Type> first_declared_type,
-                     SI&& duplicate_decl_stmt_info)
+  TypeDuplicateDeclError(std::shared_ptr<Type> first_declared_type,
+                         SI&& duplicate_decl_stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "A type " + first_declared_type->to_string() +
                   " has been defined more than once."),
@@ -64,6 +64,15 @@ class CustomTypeNotFoundError final : public Error {
   CustomTypeNotFoundError(const std::string& type_name, SI&& stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "cannot find type `" + type_name + "`") {}
+};
+
+class FieldDuplicateDeclError final : public Error {
+ public:
+  template <typename FIELD, typename SI>
+  FieldDuplicateDeclError(FIELD first_decl_field, SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "field `" + first_decl_field.get_name() +
+                  "` is already declared") {}
 };
 
 }  // namespace toolman
