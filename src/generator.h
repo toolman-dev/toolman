@@ -5,23 +5,28 @@
 #ifndef TOOLMAN_GENERATOR_H_
 #define TOOLMAN_GENERATOR_H_
 
+#include <memory>
+
 #include "src/custom_type.h"
 #include "src/document.h"
 
 namespace toolman {
 class Generator {
  public:
-  virtual void generate_struct(std::ostream& ostream,
-                               const StructType& struct_type) const = 0;
-  virtual void generate_enum(std::ostream& ostream,
-                             const EnumType& enum_type) const = 0;
+  virtual void generate_struct(
+      std::ostream& ostream,
+      const std::shared_ptr<StructType>& struct_type) const = 0;
+  virtual void generate_enum(
+      std::ostream& ostream,
+      const std::shared_ptr<EnumType>& enum_type) const = 0;
 
-  void generate(std::ostream& ostream, const Document& document) const {
-    for (const auto& struct_type : document.get_struct_types()) {
+  void generate(std::ostream& ostream,
+                const std::unique_ptr<Document>& document) const {
+    for (const auto& struct_type : document->get_struct_types()) {
       generate_struct(ostream, struct_type);
     }
 
-    for (const auto& enum_type : document.get_enum_types()) {
+    for (const auto& enum_type : document->get_enum_types()) {
       generate_enum(ostream, enum_type);
     }
   }

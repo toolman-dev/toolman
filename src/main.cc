@@ -10,6 +10,7 @@
 #include "ToolmanParser.h"
 #include "ToolmanParserBaseListener.h"
 #include "src/error.h"
+#include "src/golang_generator.h"
 #include "src/scope.h"
 #include "src/walker.h"
 
@@ -50,7 +51,10 @@ int main(int, char **) {
       std::cout << error.error() << std::endl << std::endl;
     }
 
-    std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
+    // std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
+    toolman::GolangGenerator gg;
+
+    gg.generate(std::cout, ref_phase_walker.get_document());
   }
   return 0;
 }

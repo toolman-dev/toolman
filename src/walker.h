@@ -112,7 +112,11 @@ class StructTypeBuilder {
     }
   }
 
-  void end_field() { current_struct_type_->append_field(current_field_); }
+  void end_field() {
+    if (current_field_.has_value()) {
+      current_struct_type_->append_field(current_field_.value());
+    }
+  }
 
   void start_struct_type(std::shared_ptr<StructType> struct_type) {
     current_struct_type_ = std::move(struct_type);
@@ -176,8 +180,8 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     struct_builder_.start_field(
         Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
   }
-  void exitStructField(ToolmanParser::StructFieldContext *) override {
-      struct_builder_.end_field();
+  void exitStructField(ToolmanParser::StructFieldContext*) override {
+    struct_builder_.end_field();
   }
 
   void enterFieldType(ToolmanParser::FieldTypeContext* node) override {
