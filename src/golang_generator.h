@@ -26,7 +26,7 @@ class GolangGenerator : public Generator {
             << " struct {" << std::endl;
 
     for (const auto& field : struct_type->get_fields()) {
-      ostream << capitalize(field.get_name()) << " "
+      ostream << "  " << capitalize(field.get_name()) << " "
               << type_to_go_type(field.get_type())
               << " `json:\"" + field.get_name() + "\"`" << std::endl;
     }
