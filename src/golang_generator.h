@@ -17,20 +17,27 @@
 namespace toolman {
 class GolangGenerator : public Generator {
  public:
+  void before_generate_struct(std::ostream& ostream) const override {
+    ostream << "type (" << NL;
+  }
+
+  void after_generate_struct(std::ostream& ostream) const override {
+    ostream << ")" << NL;
+  }
+
   void generate_struct(
       std::ostream& ostream,
       const std::shared_ptr<StructType>& struct_type) const override {
-    ostream << "type "
-            << (struct_type->is_public() ? capitalize(struct_type->get_name())
+    ostream << (struct_type->is_public() ? capitalize(struct_type->get_name())
                                          : struct_type->get_name())
-            << " struct {" << std::endl;
+            << " struct {" << NL;
 
     for (const auto& field : struct_type->get_fields()) {
       ostream << "  " << capitalize(field.get_name()) << " "
               << type_to_go_type(field.get_type())
-              << " `json:\"" + field.get_name() + "\"`" << std::endl;
+              << " `json:\"" + field.get_name() + "\"`" << NL;
     }
-    ostream << "}";
+    ostream << "}"<< NL;
   }
 
   void generate_enum(
@@ -40,27 +47,27 @@ class GolangGenerator : public Generator {
     ostream << "type "
             << (enum_type->is_public() ? capitalized_name
                                        : enum_type->get_name())
-            << "int32" << std::endl;
-    ostream << "const (" << std::endl;
+            << "int32" << NL;
+    ostream << "const (" << NL;
     for (const auto& field : enum_type->get_fields()) {
       ostream << capitalized_name << "_" << field.get_name() << " "
-              << capitalized_name << " = " << field.get_value() << std::endl;
+              << capitalized_name << " = " << field.get_value() << NL;
     }
-    ostream << ")" << std::endl;
+    ostream << ")" << NL;
   }
 
  private:
-  std::string capitalize(std::string in) const {
+  [[nodiscard]] static std::string capitalize(std::string in) {
     in[0] = toupper(in[0]);
     return in;
   }
 
-  std::string decapitalize(std::string in) const {
+  [[nodiscard]] static std::string decapitalize(std::string in) {
     in[0] = tolower(in[0]);
     return in;
   }
 
-  std::string type_to_go_type(const std::shared_ptr<Type> type) const {
+  [[nodiscard]] static std::string type_to_go_type(const std::shared_ptr<Type>& type) {
     if (type->is_primitive()) {
       auto primitive = std::dynamic_pointer_cast<PrimitiveType>(type);
       if (primitive->is_bool()) {
