@@ -169,7 +169,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   }
 
   void exitStructDecl(ToolmanParser::StructDeclContext* node) override {
-      struct_builder_.end_struct_type();
+    document_->insert_struct_type(struct_builder_.end_struct_type());
   }
 
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
