@@ -26,8 +26,7 @@ void FieldTypeBuilder::start_type(const std::shared_ptr<Type>& type) {
               std::dynamic_pointer_cast<PrimitiveType>(type));
         }
       } else if (TypeLocation::MapValue == current_type_location_) {
-        map_type->set_value_type(
-            std::dynamic_pointer_cast<PrimitiveType>(type));
+        map_type->set_value_type(type);
       }
     }
   }

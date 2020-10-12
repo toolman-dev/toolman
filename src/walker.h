@@ -225,7 +225,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   }
   void enterMapValueType(ToolmanParser::MapValueTypeContext*) override {
     field_type_builder_.set_type_location(
-        FieldTypeBuilder::TypeLocation::MapKey);
+        FieldTypeBuilder::TypeLocation::MapValue);
   }
 
   void enterPrimitiveType(ToolmanParser::PrimitiveTypeContext* node) override {
