@@ -59,11 +59,7 @@ fieldType: type_;
 structFieldList: structField (Comma structField)*;
 
 structField:
-	identifierName Colon fieldType QuestionMark? (
-		Assign structFieldInit
-	)?;
-
-structFieldInit: literal | enumItem;
+	identifierName Colon fieldType QuestionMark?;
 
 enumFieldList: enumField (Comma enumField)*;
 
@@ -74,7 +70,7 @@ enumItem: identifierName Doublecolon identifierName;
 
 identifierName: Identifier | reservedWord;
 
-reservedWord: keyword | BooleanLiteral;
+reservedWord: keyword;
 
 keyword:
 	Struct
@@ -94,33 +90,8 @@ keyword:
 	| U64
 	| Float;
 
-literal: primitiveLiteral | listLiteral | mapLiteral;
-
-primitiveLiteral:
-	BooleanLiteral
-	| StringLiteral
-	| numericLiteral;
-
 intgerLiteral:
 	DecIntegerLiteral
 	| HexIntegerLiteral
 	| OctalIntegerLiteral
 	| BinaryIntegerLiteral;
-
-numericLiteral:
-	DecIntegerLiteral
-	| DecimalLiteral
-	| HexIntegerLiteral
-	| OctalIntegerLiteral
-	| BinaryIntegerLiteral;
-
-listLiteral: OpenBracket listElementList? CloseBracket;
-
-listElementList: listElement (Comma listElement)*;
-
-listElement: literal Comma?;
-
-mapLiteral:
-	OpenBrace primitiveLiteral Colon literal (
-		Comma primitiveLiteral Colon literal
-	)* CloseBrace;

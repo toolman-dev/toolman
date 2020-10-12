@@ -18,7 +18,6 @@
 #include "src/error.h"
 #include "src/field.h"
 #include "src/list_type.h"
-#include "src/literal.h"
 #include "src/map_type.h"
 #include "src/scope.h"
 
@@ -81,60 +80,16 @@ class FieldTypeBuilder {
     current_type_location_ = type_location;
   }
 
-  void start_type(const std::shared_ptr<Type>& type) {
-    if (!type_stack_.empty()) {
-      if (type_stack_.top()->is_list()) {
-        if (TypeLocation::ListElement == current_type_location_) {
-          auto list_type =
-              std::dynamic_pointer_cast<ListType>(type_stack_.top());
-          list_type->set_elem_type(type);
-        }
-
-      } else if (type_stack_.top()->is_map()) {
-        auto map_type = std::dynamic_pointer_cast<MapType>(type_stack_.top());
-
-        if (TypeLocation::MapKey == current_type_location_) {
-          // The key of the map must be a primitive type.
-          if (!type->is_primitive()) {
-            throw MapKeyTypeMustBePrimitiveError(type);
-          } else {
-            map_type->set_key_type(
-                std::dynamic_pointer_cast<PrimitiveType>(type));
-          }
-        } else if (TypeLocation::MapValue == current_type_location_) {
-          map_type->set_value_type(
-              std::dynamic_pointer_cast<PrimitiveType>(type));
-        }
-      }
-    }
-
-    if (type->is_map() || type->is_list()) {
-      type_stack_.push(type);
-    } else {
-      current_single_type_ = type;
-    }
-  }
+  void start_type(const std::shared_ptr<Type>& type);
 
   // If return value is not null-pointer
   // that means returned is current filed type
-  std::shared_ptr<Type> end_map_or_list_type() {
-    auto top = type_stack_.top();
-    type_stack_.pop();
-    if (type_stack_.empty()) {
-      return top;
-    }
-    return std::shared_ptr<Type>(nullptr);
-  }
+  std::shared_ptr<Type> end_map_or_list_type();
 
   // Other types besides map and list.
   // If return value is not null-pointer
   // that means returned is current filed type
-  std::shared_ptr<Type> end_single_type() {
-    if (type_stack_.empty()) {
-      return current_single_type_;
-    }
-    return std::shared_ptr<Type>(nullptr);
-  }
+  std::shared_ptr<Type> end_single_type();
 
  private:
   std::stack<std::shared_ptr<Type>> type_stack_;
@@ -148,7 +103,7 @@ class StructTypeBuilder {
   StructTypeBuilder() : current_field_(std::nullopt) {}
 
   void start_field(FIELD field) {
-    current_field_ = std::optional<FIELD>{field};
+    current_field_ = std::optional<FIELD>(std::move(field));
   }
 
   void set_current_field_type(std::shared_ptr<Type> type) {
@@ -167,82 +122,16 @@ class StructTypeBuilder {
     return current_struct_type_;
   }
 
+  std::shared_ptr<Type> get_current_field_type() {
+    if (current_field_.has_value()) {
+      return current_field_.value().get_type();
+    }
+    return std::shared_ptr<Type>(nullptr);
+  }
+
  private:
   std::optional<FIELD> current_field_;
   std::shared_ptr<StructType> current_struct_type_;
-};
-
-class LiteralBuilder {
- public:
-  enum class LiteralLocation : char { Top, ListElement, MapKey, MapValue };
-  void start_literal(std::unique_ptr<Literal> literal) {
-    if (!literal_stack_.empty()) {
-      const auto& top = literal_stack_.top();
-      if (top->is_list()) {
-        if (LiteralLocation::ListElement == current_literal_location_) {
-          auto list_literal = dynamic_cast<ListLiteral*>(top.get());
-          list_literal->insert(literal);
-        }
-
-      } else if (top->is_map()) {
-        if (LiteralLocation::MapKey == current_literal_location_) {
-          // The map key must be a primitive type.
-          if (!literal->is_primitive()) {
-            // todo
-            //                          throw
-            //                          MapKeyTypeMustBePrimitiveError(type);
-          } else {
-            // In this branch the the `literal` must be `PrimitiveLiteral`.
-            // the dynamic_cast Won't fail. so `literal.release()` may not leak
-            // memory.
-            current_map_key_literal_ = std::unique_ptr<PrimitiveLiteral>(
-                dynamic_cast<PrimitiveLiteral*>(literal.release()));
-            return;
-          }
-        } else if (LiteralLocation::MapValue == current_literal_location_) {
-          if (current_map_key_literal_) {
-            auto map_literal = dynamic_cast<MapLiteral*>(top.get());
-            map_literal->insert(
-                std::make_pair(std::unique_ptr<PrimitiveLiteral>(
-                                   current_map_key_literal_.release()),
-                               std::unique_ptr<Literal>(literal.release())));
-          }
-        }
-      }
-    }
-    if (literal->is_map() || literal->is_list()) {
-      literal_stack_.push(std::unique_ptr<Literal>(literal.release()));
-    } else {
-      current_single_literal_ = std::unique_ptr<Literal>(literal.release());
-    }
-  }
-
-  // If return value is not null-pointer
-  // that means returned is current filed init literal
-  std::unique_ptr<Literal> end_map_or_list_literal() {
-    auto top = std::unique_ptr<Literal>(literal_stack_.top().release());
-    literal_stack_.pop();
-    if (literal_stack_.empty()) {
-      return top;
-    }
-    return std::unique_ptr<Literal>(nullptr);
-  }
-
-  // Other types besides map and list.
-  // If return value is not null-pointer
-  // that means returned is current filed init literal
-  std::unique_ptr<Literal> end_single_literal() {
-    if (literal_stack_.empty()) {
-      return std::unique_ptr<Literal>(current_single_literal_.release());
-    }
-    return std::unique_ptr<Literal>(nullptr);
-  }
-
- private:
-  std::stack<std::unique_ptr<Literal>> literal_stack_;
-  std::unique_ptr<PrimitiveLiteral> current_map_key_literal_;
-  std::unique_ptr<Literal> current_single_literal_;
-  LiteralLocation current_literal_location_ = LiteralLocation::Top;
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener {
@@ -279,6 +168,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     struct_builder_.start_struct_type(search);
   }
 
+  void exitStructDecl(ToolmanParser::StructDeclContext* node) override {
+      struct_builder_.end_struct_type();
+  }
+
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
     struct_builder_.start_field(
         Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
@@ -308,7 +201,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     try {
       field_type_builder_.start_type(
           std::make_shared<MapType>(MapType(get_stmt_info(node, file_))));
-    } catch (MapKeyTypeMustBePrimitiveError e) {
+    } catch (MapKeyTypeMustBePrimitiveError& e) {
       errors_.emplace_back(e);
     }
   }

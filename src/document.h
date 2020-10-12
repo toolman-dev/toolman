@@ -15,10 +15,10 @@ namespace toolman {
 
 class Document final {
  public:
-  const std::vector<StructType>& get_struct_types() const {
+  [[nodiscard]] const std::vector<StructType>& get_struct_types() const {
     return struct_types_;
   }
-  const std::vector<EnumType>& get_enum_types() const { return enum_types_; }
+  [[nodiscard]] const std::vector<EnumType>& get_enum_types() const { return enum_types_; }
 
  private:
   std::vector<StructType> struct_types_;

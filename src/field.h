@@ -36,6 +36,8 @@ class Field final : public HasStmtInfo {
 
   void set_type(std::shared_ptr<Type> type) { type_ = std::move(type); }
 
+  std::shared_ptr<Type> get_type() { return type_; }
+
  private:
   std::shared_ptr<Type> type_;
   std::string name_;

@@ -18,8 +18,6 @@ class Error {
   enum class ErrorType : char { Lexer, Syntax, Semantic };
   enum class Level : char { Note, Warning, Fatal };
 
-  Error(ErrorType type, Level level) : type_(type), level_(level) {}
-
   template <typename S>
   Error(ErrorType type, Level level, S&& message)
       : type_(type), level_(level), message_(std::forward<S>(message)) {}
@@ -48,33 +46,16 @@ class DuplicateDeclError final : public Error {
   StmtInfo duplicate_decl_stmt_info_;
 };
 
-class LiteralElementTypeMismatchError final : public Error {
- public:
-  template <typename S, typename SI>
-  LiteralElementTypeMismatchError(S&& message, SI&& stmt_info)
-      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
-              std::forward<S>(message), std::forward<SI>(stmt_info)) {}
-};
-
-class FieldTypeMismatchError final : public Error {
- public:
-  template <typename S, typename SI1, typename SI2>
-  FieldTypeMismatchError(S&& message, SI1&& field_stmt_info,
-                         SI2&& literal_stmt_info)
-      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
-              std::forward<S>(message), std::forward<SI1>(field_stmt_info)),
-        literal_stmt_info_(std::forward<SI2>(literal_stmt_info)) {}
-
- private:
-  StmtInfo literal_stmt_info_;
-};
-
 class MapKeyTypeMustBePrimitiveError final : public Error {
  public:
   explicit MapKeyTypeMustBePrimitiveError(const std::shared_ptr<Type>& key_type)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "The key of the map must be a primitive type. give " +
-                  key_type->to_string()) {}
+                  key_type->to_string()),
+        key_type_(key_type) {}
+
+ private:
+  std::shared_ptr<Type> key_type_;
 };
 
 class CustomTypeNotFoundError final : public Error {
