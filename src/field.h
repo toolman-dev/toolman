@@ -34,6 +34,8 @@ class Field final : public HasStmtInfo {
 
   [[nodiscard]] bool is_optional() const { return optional_; }
 
+  void set_optional(bool optional) { optional_ = optional; }
+
   void set_type(std::shared_ptr<Type> type) { type_ = std::move(type); }
 
   std::shared_ptr<Type> get_type() { return type_; }
