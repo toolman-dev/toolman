@@ -62,7 +62,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
     if (auto search =
             type_scope_->lookup_type(node->identifierName()->getText());
         search.has_value()) {
-      errors_.emplace_back(TypeDuplicateDeclError(search.value(), stmt_info));
+      errors_.emplace_back(DuplicateTypeDeclError(search.value(), stmt_info));
       return;
     } else {
       type_scope_->declare(std::make_shared<DECL_TYPE>(
@@ -106,30 +106,40 @@ class CustomTypeBuilder {
     current_custom_type_ = std::move(custom_type);
   }
 
-  [[nodiscard]] std::shared_ptr<CustomType<FIELD>> end_custom_type() const {
-    return current_custom_type_;
+  [[nodiscard]] std::shared_ptr<CustomType<FIELD>> end_custom_type() {
+    auto ret = current_custom_type_;
+    current_custom_type_.reset();
+    return ret;
   }
 
   void start_field(FIELD field) {
     current_field_ = std::optional<FIELD>(std::move(field));
   }
 
-  void end_field(bool optional) {
+  void clear_current_field() { current_field_ = std::nullopt; }
+
+  void end_field() {
     if (current_field_.has_value()) {
-      current_field_.value().set_optional(optional);
       if (!current_custom_type_->append_field(current_field_.value())) {
         auto current_field = current_field_.value();
-        throw FieldDuplicateDeclError(
+        throw DuplicateFieldDeclError(
             current_custom_type_->get_field_by_name(current_field.get_name())
                 .value(),
             current_field.get_stmt_info());
       }
+      clear_current_field();
     }
   }
 
   void set_current_field_type(std::shared_ptr<Type> type) {
     if (current_field_.has_value()) {
       current_field_.value().set_type(std::move(type));
+    }
+  }
+
+  void set_current_field_optional(bool optional) {
+    if (current_field_.has_value()) {
+      current_field_.value().set_optional(optional);
     }
   }
 
@@ -197,9 +207,13 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   void exitStructField(ToolmanParser::StructFieldContext* node) override {
     try {
       if (oneof_builder_stack_.empty()) {
-        struct_builder_.end_field(node->QuestionMark() != nullptr);
+        struct_builder_.set_current_field_optional(node->QuestionMark() !=
+                                                   nullptr);
+        struct_builder_.end_field();
       } else {
-        oneof_builder_stack_.top().end_field(node->QuestionMark() != nullptr);
+        oneof_builder_stack_.top().set_current_field_optional(
+            node->QuestionMark() != nullptr);
+        oneof_builder_stack_.top().end_field();
       }
     } catch (FieldDuplicateDeclError& e) {
       errors_.emplace_back(e);
@@ -314,7 +328,45 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   }
 
   void enterEnumDecl(ToolmanParser::EnumDeclContext* node) override {
-    //      enum_builder_.start_custom_type()
+    auto type_name = node->identifierName()->getText();
+    auto search_opt =
+        type_scope_->lookup_type(node->identifierName()->getText());
+    if (!search_opt.has_value()) {
+      // Logically, this situation will not happen
+      throw std::runtime_error("The type name`" + type_name + "` not found.");
+    }
+    auto search = std::dynamic_pointer_cast<EnumType>(search_opt.value());
+    if (!search) {
+      // Logically, this situation will not happen
+      throw std::runtime_error("The type name`" + type_name + "` is " +
+                               search->to_string());
+    }
+    enum_builder_.start_custom_type(search);
+  }
+
+  void exitEnumDecl(ToolmanParser::EnumDeclContext*) override {
+    document_->insert_enum_type(
+        std::dynamic_pointer_cast<EnumType>(enum_builder_.end_custom_type()));
+  }
+
+  void enterEnumField(ToolmanParser::EnumFieldContext* node) override {
+    auto enum_field = EnumField(node->identifierName()->getText(),
+                                get_stmt_info(node, file_));
+    auto value = std::stoi(node->intgerLiteral()->getText());
+    if (!enum_field.set_value(value)) {
+      errors_.emplace_back(DuplicateEnumFieldValue(
+          EnumField::get_by_value(value).value(), get_stmt_info(node, file_)));
+      return;
+    }
+    enum_builder_.start_field(enum_field);
+  }
+
+  void exitEnumField(ToolmanParser::EnumFieldContext* node) override {
+    try {
+      enum_builder_.end_field();
+    } catch (DuplicateFieldDeclError& e) {
+      errors_.emplace_back(e);
+    }
   }
 
   void enterOneofType(ToolmanParser::OneofTypeContext* node) override {
@@ -329,6 +381,9 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     oneof_builder_stack_.pop();
     if (oneof_builder_stack_.empty()) {
       struct_builder_.set_current_field_type(top.get_current_field_type());
+    } else {
+      oneof_builder_stack_.top().set_current_field_type(
+          top.get_current_field_type());
     }
   }
 
