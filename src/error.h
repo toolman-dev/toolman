@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "enum_field.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
@@ -30,10 +31,10 @@ class Error {
   std::string message_;
 };
 
-class TypeDuplicateDeclError final : public Error {
+class DuplicateTypeDeclError final : public Error {
  public:
   template <typename SI>
-  TypeDuplicateDeclError(std::shared_ptr<Type> first_declared_type,
+  DuplicateTypeDeclError(std::shared_ptr<Type> first_declared_type,
                          SI&& duplicate_decl_stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "A type " + first_declared_type->to_string() +
@@ -66,13 +67,23 @@ class CustomTypeNotFoundError final : public Error {
               "cannot find type `" + type_name + "`") {}
 };
 
-class FieldDuplicateDeclError final : public Error {
+class DuplicateFieldDeclError final : public Error {
  public:
   template <typename FIELD, typename SI>
-  FieldDuplicateDeclError(FIELD first_decl_field, SI&& stmt_info)
+  DuplicateFieldDeclError(FIELD first_decl_field, SI&& stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "field `" + first_decl_field.get_name() +
                   "` is already declared") {}
+};
+
+class DuplicateEnumFieldValue final : public Error {
+ public:
+  template <typename SI>
+  DuplicateEnumFieldValue(const EnumField& first_value_field, SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "discriminant value `" +
+                  std::to_string(first_value_field.get_value()) +
+                  "` already exists") {}
 };
 
 }  // namespace toolman
