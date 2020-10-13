@@ -380,10 +380,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     auto top = oneof_builder_stack_.top();
     oneof_builder_stack_.pop();
     if (oneof_builder_stack_.empty()) {
-      struct_builder_.set_current_field_type(top.get_current_field_type());
+      struct_builder_.set_current_field_type(top.end_custom_type());
     } else {
       oneof_builder_stack_.top().set_current_field_type(
-          top.get_current_field_type());
+          top.end_custom_type());
     }
   }
 

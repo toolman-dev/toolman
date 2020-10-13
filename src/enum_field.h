@@ -25,6 +25,7 @@ class EnumField final : public HasStmtInfo {
 
   [[nodiscard]] int get_value() const { return value_; }
 
+  // set value to enum field, return false when value already exists.
   bool set_value(int value) {
     value_ = value;
     return value_mapping_.emplace(value, *this).second;
