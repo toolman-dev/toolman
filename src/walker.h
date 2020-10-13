@@ -215,7 +215,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
             node->QuestionMark() != nullptr);
         oneof_builder_stack_.top().end_field();
       }
-    } catch (FieldDuplicateDeclError& e) {
+    } catch (DuplicateFieldDeclError& e) {
       errors_.emplace_back(e);
     }
   }
