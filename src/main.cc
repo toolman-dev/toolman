@@ -38,7 +38,12 @@ int main(int, char **) {
 
     walker.walk(&def_phase_walker, tree);
 
+    bool has_fetal = false;
+
     for (const auto &error : def_phase_walker.get_errors()) {
+      if (!has_fetal && error.is_fatal()) {
+        has_fetal = true;
+      }
       std::cout << error.error() << std::endl << std::endl;
     }
 
@@ -47,14 +52,19 @@ int main(int, char **) {
                        std::make_shared<std::string>(filename));
 
     walker.walk(&ref_phase_walker, tree);
+
     for (const auto &error : ref_phase_walker.get_errors()) {
+      if (!has_fetal && error.is_fatal()) {
+        has_fetal = true;
+      }
       std::cout << error.error() << std::endl << std::endl;
     }
 
     // std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
-    toolman::GolangGenerator gg;
-
-    gg.generate(std::cout, ref_phase_walker.get_document());
+    if (!has_fetal) {
+      toolman::GolangGenerator gg;
+      gg.generate(std::cout, ref_phase_walker.get_document());
+    }
   }
   return 0;
 }

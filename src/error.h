@@ -23,6 +23,8 @@ class Error {
   Error(ErrorType type, Level level, S&& message)
       : type_(type), level_(level), message_(std::forward<S>(message)) {}
 
+  [[nodiscard]] bool is_fatal() const { return level_ == Level::Fatal; }
+
   [[nodiscard]] virtual std::string error() const { return message_; }
 
  protected:
