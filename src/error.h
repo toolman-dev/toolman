@@ -78,14 +78,23 @@ class DuplicateFieldDeclError final : public Error {
                   "` is already declared") {}
 };
 
-class DuplicateEnumFieldValue final : public Error {
+class DuplicateEnumFieldValueError final : public Error {
  public:
   template <typename SI>
-  DuplicateEnumFieldValue(const EnumField& first_value_field, SI&& stmt_info)
+  DuplicateEnumFieldValueError(const EnumField& first_value_field,
+                               SI&& stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "discriminant value `" +
                   std::to_string(first_value_field.get_value()) +
                   "` already exists") {}
+};
+
+class RecursiveOneofTypeError final : public Error {
+ public:
+  template <typename SI>
+  explicit RecursiveOneofTypeError(SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "oneof type does not allow recursion") {}
 };
 
 }  // namespace toolman

@@ -32,7 +32,7 @@ class GolangGenerator : public Generator {
   void generate_struct(
       std::ostream& ostream,
       const std::shared_ptr<StructType>& struct_type) const override {
-    auto capitalized_struct_name = capitalize(struct_type->get_name();
+    auto capitalized_struct_name = capitalize(struct_type->get_name());
     for (const auto& field : struct_type->get_fields()) {
       if (field.get_type()->is_oneof()) {
         auto oneof_name =
