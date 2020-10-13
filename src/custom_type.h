@@ -24,10 +24,6 @@ class CustomType : public Type {
       : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
         is_public_(is_public) {}
 
-  template <typename SI>
-  CustomType(SI&& stmt_info, bool is_public)
-      : Type(std::forward<SI>(stmt_info)), is_public_(is_public) {}
-
   bool append_field(F f) {
     // returns false when there is a conflict of field names
     if (get_field_by_name(f.get_name()).has_value()) {
@@ -94,7 +90,10 @@ class EnumType final : public CustomType<EnumField> {
 
 class OneofType final : public CustomType<Field> {
  public:
-  using CustomType::CustomType;
+  template <typename SI>
+  OneofType(SI&& stmt_info)
+      : CustomType("oneof", std::forward<SI>(stmt_info), false) {}
+
   [[nodiscard]] bool is_oneof() const override { return true; }
   [[nodiscard]] std::string to_string() const override { return "oneof(...)"; }
 

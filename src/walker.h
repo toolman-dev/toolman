@@ -103,7 +103,7 @@ class CustomTypeBuilder {
   CustomTypeBuilder() : current_field_(std::nullopt) {}
 
   void start_custom_type(std::shared_ptr<CustomType<FIELD>> custom_type) {
-      current_custom_type_ = std::move(custom_type);
+    current_custom_type_ = std::move(custom_type);
   }
 
   [[nodiscard]] std::shared_ptr<CustomType<FIELD>> end_custom_type() const {
@@ -120,9 +120,9 @@ class CustomTypeBuilder {
       if (!current_custom_type_->append_field(current_field_.value())) {
         auto current_field = current_field_.value();
         throw FieldDuplicateDeclError(
-                current_custom_type_->get_field_by_name(current_field.get_name())
+            current_custom_type_->get_field_by_name(current_field.get_name())
                 .value(),
-                current_field.get_stmt_info());
+            current_field.get_stmt_info());
       }
     }
   }
@@ -176,20 +176,31 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
       throw std::runtime_error("The type name`" + type_name + "` is " +
                                search->to_string());
     }
-      struct_builder_.start_custom_type(search);
+    struct_builder_.start_custom_type(search);
   }
 
   void exitStructDecl(ToolmanParser::StructDeclContext* node) override {
-    document_->insert_struct_type(std::dynamic_pointer_cast<StructType>(struct_builder_.end_custom_type()));
+    document_->insert_struct_type(std::dynamic_pointer_cast<StructType>(
+        struct_builder_.end_custom_type()));
   }
 
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
-    struct_builder_.start_field(
-        Field(node->identifierName()->getText(), get_stmt_info(node, file_)));
+    auto field =
+        Field(node->identifierName()->getText(), get_stmt_info(node, file_));
+    if (oneof_builder_stack_.empty()) {
+      struct_builder_.start_field(field);
+    } else {
+      oneof_builder_stack_.top().start_field(field);
+    }
   }
+
   void exitStructField(ToolmanParser::StructFieldContext* node) override {
     try {
-      struct_builder_.end_field(node->QuestionMark() != nullptr);
+      if (oneof_builder_stack_.empty()) {
+        struct_builder_.end_field(node->QuestionMark() != nullptr);
+      } else {
+        oneof_builder_stack_.top().end_field(node->QuestionMark() != nullptr);
+      }
     } catch (FieldDuplicateDeclError& e) {
       errors_.emplace_back(e);
     }
@@ -206,7 +217,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitListType(ToolmanParser::ListTypeContext*) override {
     if (auto type = field_type_builder_.end_map_or_list_type(); type) {
-      struct_builder_.set_current_field_type(type);
+      if (oneof_builder_stack_.empty()) {
+        struct_builder_.set_current_field_type(type);
+      } else {
+        oneof_builder_stack_.top().set_current_field_type(type);
+      }
     }
   }
 
@@ -226,7 +241,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitMapType(ToolmanParser::MapTypeContext*) override {
     if (auto type = field_type_builder_.end_map_or_list_type(); type) {
-      struct_builder_.set_current_field_type(type);
+      if (oneof_builder_stack_.empty()) {
+        struct_builder_.set_current_field_type(type);
+      } else {
+        oneof_builder_stack_.top().set_current_field_type(type);
+      }
     }
   }
 
@@ -264,7 +283,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitPrimitiveType(ToolmanParser::PrimitiveTypeContext*) override {
     if (auto type = field_type_builder_.end_single_type(); type) {
-      struct_builder_.set_current_field_type(type);
+      if (oneof_builder_stack_.empty()) {
+        struct_builder_.set_current_field_type(type);
+      } else {
+        oneof_builder_stack_.top().set_current_field_type(type);
+      }
     }
   }
 
@@ -282,12 +305,31 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitCustomTypeName(ToolmanParser::CustomTypeNameContext*) override {
     if (auto type = field_type_builder_.end_single_type(); type) {
-      struct_builder_.set_current_field_type(type);
+      if (oneof_builder_stack_.empty()) {
+        struct_builder_.set_current_field_type(type);
+      } else {
+        oneof_builder_stack_.top().set_current_field_type(type);
+      }
     }
   }
 
-  void enterEnumDecl(ToolmanParser::EnumDeclContext *node) override {
-//      enum_builder_.start_custom_type()
+  void enterEnumDecl(ToolmanParser::EnumDeclContext* node) override {
+    //      enum_builder_.start_custom_type()
+  }
+
+  void enterOneofType(ToolmanParser::OneofTypeContext* node) override {
+    oneof_builder_stack_.push(CustomTypeBuilder<Field>());
+    StmtInfo stmt_info = get_stmt_info(node, file_);
+    oneof_builder_stack_.top().start_custom_type(
+        std::make_shared<OneofType>(OneofType(stmt_info)));
+  }
+
+  void exitOneofType(ToolmanParser::OneofTypeContext* /*ctx*/) override {
+    auto top = oneof_builder_stack_.top();
+    oneof_builder_stack_.pop();
+    if (oneof_builder_stack_.empty()) {
+      struct_builder_.set_current_field_type(top.get_current_field_type());
+    }
   }
 
  private:
@@ -295,6 +337,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   CustomTypeBuilder<Field> struct_builder_;
   FieldTypeBuilder field_type_builder_;
   CustomTypeBuilder<EnumField> enum_builder_;
+  std::stack<CustomTypeBuilder<Field>> oneof_builder_stack_;
   std::shared_ptr<Scope> type_scope_;
   std::shared_ptr<std::string> file_;
   std::vector<Error> errors_;
