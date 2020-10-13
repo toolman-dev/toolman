@@ -19,15 +19,18 @@ class EnumField final : public HasStmtInfo {
   EnumField(S&& name, int value, SI&& stmt_info)
       : name_(std::forward<S>(name)),
         value_(value),
+        optional_(false),
         HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
 
   [[nodiscard]] int get_value() const { return value_; }
+  void set_optional(bool optional) { optional_ = optional; }
 
  private:
   std::string name_;
   int value_;
+  bool optional_;
 };
 }  // namespace toolman
 

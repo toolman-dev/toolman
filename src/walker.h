@@ -98,39 +98,39 @@ class FieldTypeBuilder {
 };
 
 template <typename FIELD>
-class StructTypeBuilder {
+class CustomTypeBuilder {
  public:
-  StructTypeBuilder() : current_field_(std::nullopt) {}
+  CustomTypeBuilder() : current_field_(std::nullopt) {}
+
+  void start_custom_type(std::shared_ptr<CustomType<FIELD>> custom_type) {
+      current_custom_type_ = std::move(custom_type);
+  }
+
+  [[nodiscard]] std::shared_ptr<CustomType<FIELD>> end_custom_type() const {
+    return current_custom_type_;
+  }
 
   void start_field(FIELD field) {
     current_field_ = std::optional<FIELD>(std::move(field));
+  }
+
+  void end_field(bool optional) {
+    if (current_field_.has_value()) {
+      current_field_.value().set_optional(optional);
+      if (!current_custom_type_->append_field(current_field_.value())) {
+        auto current_field = current_field_.value();
+        throw FieldDuplicateDeclError(
+                current_custom_type_->get_field_by_name(current_field.get_name())
+                .value(),
+                current_field.get_stmt_info());
+      }
+    }
   }
 
   void set_current_field_type(std::shared_ptr<Type> type) {
     if (current_field_.has_value()) {
       current_field_.value().set_type(std::move(type));
     }
-  }
-
-  void end_field(bool optional) {
-    if (current_field_.has_value()) {
-      current_field_.value().set_optional(optional);
-      if (!current_struct_type_->append_field(current_field_.value())) {
-        auto current_field = current_field_.value();
-        throw FieldDuplicateDeclError(
-            current_struct_type_->get_field_by_name(current_field.get_name())
-                .value(),
-            current_field.get_stmt_info());
-      }
-    }
-  }
-
-  void start_struct_type(std::shared_ptr<StructType> struct_type) {
-    current_struct_type_ = std::move(struct_type);
-  }
-
-  [[nodiscard]] std::shared_ptr<StructType> end_struct_type() const {
-    return current_struct_type_;
   }
 
   std::shared_ptr<Type> get_current_field_type() {
@@ -142,7 +142,7 @@ class StructTypeBuilder {
 
  private:
   std::optional<FIELD> current_field_;
-  std::shared_ptr<StructType> current_struct_type_;
+  std::shared_ptr<CustomType<FIELD>> current_custom_type_;
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener {
@@ -151,7 +151,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
                  std::shared_ptr<std::string> file)
       : type_scope_(std::move(type_scope)),
         file_(std::move(file)),
-        struct_builder_() {}
+        enum_builder_() {}
   std::unique_ptr<Document> get_document() {
     return std::unique_ptr<Document>(document_.release());
   }
@@ -176,11 +176,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
       throw std::runtime_error("The type name`" + type_name + "` is " +
                                search->to_string());
     }
-    struct_builder_.start_struct_type(search);
+      struct_builder_.start_custom_type(search);
   }
 
   void exitStructDecl(ToolmanParser::StructDeclContext* node) override {
-    document_->insert_struct_type(struct_builder_.end_struct_type());
+    document_->insert_struct_type(std::dynamic_pointer_cast<StructType>(struct_builder_.end_custom_type()));
   }
 
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
@@ -286,10 +286,15 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     }
   }
 
+  void enterEnumDecl(ToolmanParser::EnumDeclContext *node) override {
+//      enum_builder_.start_custom_type()
+  }
+
  private:
   std::unique_ptr<Document> document_;
-  StructTypeBuilder<Field> struct_builder_;
+  CustomTypeBuilder<Field> struct_builder_;
   FieldTypeBuilder field_type_builder_;
+  CustomTypeBuilder<EnumField> enum_builder_;
   std::shared_ptr<Scope> type_scope_;
   std::shared_ptr<std::string> file_;
   std::vector<Error> errors_;
