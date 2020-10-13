@@ -382,8 +382,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     if (oneof_builder_stack_.empty()) {
       struct_builder_.set_current_field_type(top.end_custom_type());
     } else {
-      oneof_builder_stack_.top().set_current_field_type(
-          top.end_custom_type());
+      oneof_builder_stack_.top().set_current_field_type(top.end_custom_type());
     }
   }
 

@@ -17,39 +17,46 @@
 namespace toolman {
 class GolangGenerator : public Generator {
  public:
-  void before_generate_struct(std::ostream& ostream) const override {
+  void before_generate_struct(std::ostream& ostream,
+                              const Document* document) const override {
+    for (const auto& struct_type : document->get_struct_types()) {
+      auto capitalized_struct_name = capitalize(struct_type->get_name());
+      for (const auto& field : struct_type->get_fields()) {
+        if (field.get_type()->is_oneof()) {
+          auto oneof_name =
+              gen_oneof_name(struct_type->get_name(), field.get_name());
+          ostream << "type " << oneof_name << " interface {" << NL << oneof_name
+                  << "()" << NL << "}" << NL;
+          auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
+          for (const auto& oneof_field : oneof->get_fields()) {
+            auto capitalized_field_name = capitalize(oneof_field.get_name());
+            auto struct_name = capitalized_struct_name + capitalized_field_name;
+            ostream << struct_name << " struct {" << NL
+                    << capitalized_field_name << " "
+                    << type_to_go_type(oneof_field.get_type()) << NL << "}"
+                    << NL << NL << "func (*" << struct_name << ") "
+                    << oneof_name << "() {}" << NL << NL;
+          }
+        }
+      }
+    }
     ostream << "type (" << NL;
   }
 
-  void after_generate_struct(std::ostream& ostream) const override {
+  void after_generate_struct(std::ostream& ostream,
+                             const Document* document) const override {
     ostream << ")" << NL << NL;
   }
 
-  void after_generate_enum(std::ostream& ostream) const override {
+  void after_generate_enum(std::ostream& ostream,
+                           const Document* document) const override {
     ostream << NL;
   }
 
   void generate_struct(
       std::ostream& ostream,
       const std::shared_ptr<StructType>& struct_type) const override {
-    auto capitalized_struct_name = capitalize(struct_type->get_name();
-    for (const auto& field : struct_type->get_fields()) {
-      if (field.get_type()->is_oneof()) {
-        auto oneof_name =
-            gen_oneof_name(struct_type->get_name(), field.get_name());
-        ostream << oneof_name + " interface {" << NL << oneof_name << "()" << NL
-                << "}" << NL;
-        auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
-        for (const auto& oneof_field : oneof->get_fields()) {
-          auto capitalized_field_name = capitalize(oneof_field.get_name());
-          ostream << capitalized_struct_name + "_" + capitalized_field_name
-                  << " struct {" << NL << capitalized_field_name << " "
-                  << type_to_go_type(oneof_field.get_type()) << NL << "}" << NL;
-        }
-      }
-    }
-
-    ostream << (struct_type->is_public() ? capitalized_struct_name
+    ostream << (struct_type->is_public() ? capitalize(struct_type->get_name())
                                          : struct_type->get_name())
             << " struct {" << NL;
     for (const auto& field : struct_type->get_fields()) {
@@ -58,7 +65,10 @@ class GolangGenerator : public Generator {
                           !field.get_type()->is_list()
                       ? "*"
                       : "")
-              << type_to_go_type(field.get_type())
+              << (field.get_type()->is_oneof()
+                      ? gen_oneof_name(struct_type->get_name(),
+                                       field.get_name())
+                      : type_to_go_type(field.get_type()))
               << " `json:\"" + field.get_name() + "\"`" << NL;
     }
     ostream << "}" << NL;
@@ -91,8 +101,8 @@ class GolangGenerator : public Generator {
     return in;
   }
 
-  [[nodiscaed]] static std::string gen_oneof_name(
-      const std::string struct_name, const std::string field_name) {
+  static std::string gen_oneof_name(const std::string struct_name,
+                                    const std::string field_name) {
     return "is" + capitalize(struct_name) + "_" + capitalize(field_name);
   }
 

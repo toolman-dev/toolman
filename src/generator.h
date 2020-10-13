@@ -16,10 +16,14 @@ namespace toolman {
 
 class Generator {
  public:
-  virtual void before_generate_struct(std::ostream& ostream) const {}
-  virtual void after_generate_struct(std::ostream& ostream) const {}
-  virtual void before_generate_enum(std::ostream& ostream) const {}
-  virtual void after_generate_enum(std::ostream& ostream) const {}
+  virtual void before_generate_struct(std::ostream& ostream,
+                                      const Document* document) const {}
+  virtual void after_generate_struct(std::ostream& ostream,
+                                     const Document* document) const {}
+  virtual void before_generate_enum(std::ostream& ostream,
+                                    const Document* document) const {}
+  virtual void after_generate_enum(std::ostream& ostream,
+                                   const Document* document) const {}
 
   virtual void generate_struct(
       std::ostream& ostream,
@@ -30,17 +34,17 @@ class Generator {
 
   void generate(std::ostream& ostream,
                 const std::unique_ptr<Document>& document) const {
-    before_generate_struct(ostream);
+    before_generate_struct(ostream, document.get());
     for (const auto& struct_type : document->get_struct_types()) {
       generate_struct(ostream, struct_type);
     }
 
-    after_generate_struct(ostream);
-    before_generate_enum(ostream);
+    after_generate_struct(ostream, document.get());
+    before_generate_enum(ostream, document.get());
     for (const auto& enum_type : document->get_enum_types()) {
       generate_enum(ostream, enum_type);
     }
-    after_generate_enum(ostream);
+    after_generate_enum(ostream, document.get());
     ostream << std::flush;
   }
 };
