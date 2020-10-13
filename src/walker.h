@@ -157,6 +157,8 @@ class CustomTypeBuilder {
 
 class RefPhaseWalker final : public ToolmanParserBaseListener {
  public:
+  enum class BuildState : char { IN_STRUCT, IN_ONEOF, RECURSIVE_ONFOF };
+
   RefPhaseWalker(std::shared_ptr<Scope> type_scope,
                  std::shared_ptr<std::string> file)
       : type_scope_(std::move(type_scope)),
@@ -186,6 +188,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
       throw std::runtime_error("The type name`" + type_name + "` is " +
                                search->to_string());
     }
+    build_state_ = BuildState::IN_STRUCT;
     struct_builder_.start_custom_type(search);
   }
 
@@ -197,23 +200,23 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
     auto field =
         Field(node->identifierName()->getText(), get_stmt_info(node, file_));
-    if (oneof_builder_stack_.empty()) {
+    if (build_state_ == BuildState::IN_STRUCT) {
       struct_builder_.start_field(field);
-    } else {
-      oneof_builder_stack_.top().start_field(field);
+    } else if (build_state_ == BuildState::IN_ONEOF) {
+      oneof_builder_.start_field(field);
     }
   }
 
   void exitStructField(ToolmanParser::StructFieldContext* node) override {
     try {
-      if (oneof_builder_stack_.empty()) {
+      if (build_state_ == BuildState::IN_STRUCT) {
         struct_builder_.set_current_field_optional(node->QuestionMark() !=
                                                    nullptr);
         struct_builder_.end_field();
-      } else {
-        oneof_builder_stack_.top().set_current_field_optional(
-            node->QuestionMark() != nullptr);
-        oneof_builder_stack_.top().end_field();
+      } else if (build_state_ == BuildState::IN_ONEOF) {
+        oneof_builder_.set_current_field_optional(node->QuestionMark() !=
+                                                  nullptr);
+        oneof_builder_.end_field();
       }
     } catch (DuplicateFieldDeclError& e) {
       errors_.emplace_back(e);
@@ -231,10 +234,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitListType(ToolmanParser::ListTypeContext*) override {
     if (auto type = field_type_builder_.end_map_or_list_type(); type) {
-      if (oneof_builder_stack_.empty()) {
+      if (build_state_ == BuildState::IN_STRUCT) {
         struct_builder_.set_current_field_type(type);
-      } else {
-        oneof_builder_stack_.top().set_current_field_type(type);
+      } else if (build_state_ == BuildState::IN_ONEOF) {
+        oneof_builder_.set_current_field_type(type);
       }
     }
   }
@@ -255,10 +258,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitMapType(ToolmanParser::MapTypeContext*) override {
     if (auto type = field_type_builder_.end_map_or_list_type(); type) {
-      if (oneof_builder_stack_.empty()) {
+      if (build_state_ == BuildState::IN_STRUCT) {
         struct_builder_.set_current_field_type(type);
-      } else {
-        oneof_builder_stack_.top().set_current_field_type(type);
+      } else if (build_state_ == BuildState::IN_ONEOF) {
+        oneof_builder_.set_current_field_type(type);
       }
     }
   }
@@ -297,10 +300,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitPrimitiveType(ToolmanParser::PrimitiveTypeContext*) override {
     if (auto type = field_type_builder_.end_single_type(); type) {
-      if (oneof_builder_stack_.empty()) {
+      if (build_state_ == BuildState::IN_STRUCT) {
         struct_builder_.set_current_field_type(type);
-      } else {
-        oneof_builder_stack_.top().set_current_field_type(type);
+      } else if (build_state_ == BuildState::IN_ONEOF) {
+        oneof_builder_.set_current_field_type(type);
       }
     }
   }
@@ -319,10 +322,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void exitCustomTypeName(ToolmanParser::CustomTypeNameContext*) override {
     if (auto type = field_type_builder_.end_single_type(); type) {
-      if (oneof_builder_stack_.empty()) {
+      if (build_state_ == BuildState::IN_STRUCT) {
         struct_builder_.set_current_field_type(type);
-      } else {
-        oneof_builder_stack_.top().set_current_field_type(type);
+      } else if (build_state_ == BuildState::IN_ONEOF) {
+        oneof_builder_.set_current_field_type(type);
       }
     }
   }
@@ -354,7 +357,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
                                 get_stmt_info(node, file_));
     auto value = std::stoi(node->intgerLiteral()->getText());
     if (!enum_field.set_value(value)) {
-      errors_.emplace_back(DuplicateEnumFieldValue(
+      errors_.emplace_back(DuplicateEnumFieldValueError(
           EnumField::get_by_value(value).value(), get_stmt_info(node, file_)));
       return;
     }
@@ -370,20 +373,21 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   }
 
   void enterOneofType(ToolmanParser::OneofTypeContext* node) override {
-    oneof_builder_stack_.push(CustomTypeBuilder<Field>());
-    StmtInfo stmt_info = get_stmt_info(node, file_);
-    oneof_builder_stack_.top().start_custom_type(
-        std::make_shared<OneofType>(OneofType(stmt_info)));
+    if (build_state_ == BuildState::IN_ONEOF) {
+      errors_.emplace_back(RecursiveOneofTypeError(get_stmt_info(node, file_)));
+      build_state_ = BuildState::RECURSIVE_ONFOF;
+      return;
+    }
+    build_state_ = BuildState::IN_ONEOF;
+    oneof_builder_.start_custom_type(
+        std::make_shared<OneofType>(OneofType(get_stmt_info(node, file_))));
   }
 
-  void exitOneofType(ToolmanParser::OneofTypeContext* /*ctx*/) override {
-    auto top = oneof_builder_stack_.top();
-    oneof_builder_stack_.pop();
-    if (oneof_builder_stack_.empty()) {
-      struct_builder_.set_current_field_type(top.end_custom_type());
-    } else {
-      oneof_builder_stack_.top().set_current_field_type(top.end_custom_type());
+  void exitOneofType(ToolmanParser::OneofTypeContext*) override {
+    if (build_state_ == BuildState::IN_ONEOF) {
+      struct_builder_.set_current_field_type(oneof_builder_.end_custom_type());
     }
+    build_state_ = BuildState::IN_STRUCT;
   }
 
  private:
@@ -391,10 +395,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   CustomTypeBuilder<Field> struct_builder_;
   FieldTypeBuilder field_type_builder_;
   CustomTypeBuilder<EnumField> enum_builder_;
-  std::stack<CustomTypeBuilder<Field>> oneof_builder_stack_;
+  CustomTypeBuilder<Field> oneof_builder_;
   std::shared_ptr<Scope> type_scope_;
   std::shared_ptr<std::string> file_;
   std::vector<Error> errors_;
+  BuildState build_state_;
 };
 
 }  // namespace toolman
