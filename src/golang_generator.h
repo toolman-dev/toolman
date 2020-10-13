@@ -32,10 +32,26 @@ class GolangGenerator : public Generator {
   void generate_struct(
       std::ostream& ostream,
       const std::shared_ptr<StructType>& struct_type) const override {
-    ostream << (struct_type->is_public() ? capitalize(struct_type->get_name())
+    auto capitalized_struct_name = capitalize(struct_type->get_name();
+    for (const auto& field : struct_type->get_fields()) {
+      if (field.get_type()->is_oneof()) {
+        auto oneof_name =
+            gen_oneof_name(struct_type->get_name(), field.get_name());
+        ostream << oneof_name + " interface {" << NL << oneof_name << "()" << NL
+                << "}" << NL;
+        auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
+        for (const auto& oneof_field : oneof->get_fields()) {
+          auto capitalized_field_name = capitalize(oneof_field.get_name());
+          ostream << capitalized_struct_name + "_" + capitalized_field_name
+                  << " struct {" << NL << capitalized_field_name << " "
+                  << type_to_go_type(oneof_field.get_type()) << NL << "}" << NL;
+        }
+      }
+    }
+
+    ostream << (struct_type->is_public() ? capitalized_struct_name
                                          : struct_type->get_name())
             << " struct {" << NL;
-
     for (const auto& field : struct_type->get_fields()) {
       ostream << "  " << capitalize(field.get_name()) << " "
               << (field.is_optional() && !field.get_type()->is_map() &&
@@ -73,6 +89,11 @@ class GolangGenerator : public Generator {
   [[nodiscard]] static std::string decapitalize(std::string in) {
     in[0] = tolower(in[0]);
     return in;
+  }
+
+  [[nodiscaed]] static std::string gen_oneof_name(
+      const std::string struct_name, const std::string field_name) {
+    return "is" + capitalize(struct_name) + "_" + capitalize(field_name);
   }
 
   [[nodiscard]] static std::string type_to_go_type(
