@@ -108,18 +108,8 @@ class GolangGenerator : public Generator {
   }
 
  private:
-  [[nodiscard]] static std::string capitalize(std::string in) {
-    in[0] = toupper(in[0]);
-    return in;
-  }
-
-  [[nodiscard]] static std::string decapitalize(std::string in) {
-    in[0] = tolower(in[0]);
-    return in;
-  }
-
-  static std::string gen_oneof_name(const std::string struct_name,
-                                    const std::string field_name) {
+  static std::string gen_oneof_name(const std::string& struct_name,
+                                    const std::string& field_name) {
     return "is" + capitalize(struct_name) + "_" + capitalize(field_name);
   }
 

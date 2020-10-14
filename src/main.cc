@@ -11,6 +11,7 @@
 #include "ToolmanParserBaseListener.h"
 #include "src/error.h"
 #include "src/golang_generator.h"
+#include "src/java_generator.h"
 #include "src/scope.h"
 #include "src/walker.h"
 
@@ -34,7 +35,7 @@ int main(int, char **) {
 
     antlr4::tree::ParseTreeWalker walker;
     auto def_phase_walker =
-        DeclPhaseWalker(std::make_shared<std::string>(filename));
+        DeclPhaseWalker(std::make_shared<std::filesystem::path>(filename));
 
     walker.walk(&def_phase_walker, tree);
 
@@ -49,7 +50,7 @@ int main(int, char **) {
 
     auto ref_phase_walker =
         RefPhaseWalker(def_phase_walker.get_type_scope(),
-                       std::make_shared<std::string>(filename));
+                       std::make_shared<std::filesystem::path>(filename));
 
     walker.walk(&ref_phase_walker, tree);
 
@@ -62,8 +63,8 @@ int main(int, char **) {
 
     // std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
     if (!has_fetal) {
-      toolman::GolangGenerator gg;
-      gg.generate(std::cout, ref_phase_walker.get_document());
+      toolman::JavaGenerator g;
+      g.generate(std::cout, ref_phase_walker.get_document());
     }
   }
   return 0;

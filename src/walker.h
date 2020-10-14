@@ -35,7 +35,7 @@ StmtInfo get_stmt_info(NODE* node, FILE&& file) {
 // Declare phase
 class DeclPhaseWalker final : public ToolmanParserBaseListener {
  public:
-  explicit DeclPhaseWalker(std::shared_ptr<std::string> file)
+  explicit DeclPhaseWalker(std::shared_ptr<std::filesystem::path> file)
       : type_scope_(std::make_shared<Scope>(Scope())), file_(std::move(file)) {}
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
     decl_type<ToolmanParser::StructDeclContext, StructType>(node);
@@ -54,7 +54,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
  private:
   std::shared_ptr<Scope> type_scope_;
   std::vector<Error> errors_;
-  std::shared_ptr<std::string> file_;
+  std::shared_ptr<std::filesystem::path> file_;
 
   template <typename NODE, typename DECL_TYPE>
   void decl_type(NODE* node) {
@@ -160,7 +160,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   enum class BuildState : char { IN_STRUCT, IN_ONEOF, RECURSIVE_ONFOF };
 
   RefPhaseWalker(std::shared_ptr<Scope> type_scope,
-                 std::shared_ptr<std::string> file)
+                 std::shared_ptr<std::filesystem::path> file)
       : type_scope_(std::move(type_scope)),
         file_(std::move(file)),
         enum_builder_() {}
@@ -172,6 +172,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterDocument(ToolmanParser::DocumentContext* node) override {
     document_ = std::make_unique<Document>();
+    document_->set_file(file_);
   }
 
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
@@ -397,7 +398,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   CustomTypeBuilder<EnumField> enum_builder_;
   CustomTypeBuilder<Field> oneof_builder_;
   std::shared_ptr<Scope> type_scope_;
-  std::shared_ptr<std::string> file_;
+  std::shared_ptr<std::filesystem::path> file_;
   std::vector<Error> errors_;
   BuildState build_state_;
 };

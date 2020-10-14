@@ -6,6 +6,7 @@
 #define TOOLMAN_DOC_H_
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/custom_type.h"
@@ -32,9 +33,18 @@ class Document final {
     enum_types_.emplace_back(std::move(et));
   }
 
+  [[nodiscard]] std::shared_ptr<std::filesystem::path> get_file() const {
+    return file_;
+  }
+
+  void set_file(std::shared_ptr<std::filesystem::path> file) {
+    file_ = std::move(file);
+  }
+
  private:
   std::vector<std::shared_ptr<StructType>> struct_types_;
   std::vector<std::shared_ptr<EnumType>> enum_types_;
+  std::shared_ptr<std::filesystem::path> file_;
 };
 }  // namespace toolman
 #endif  // TOOLMAN_DOC_H_
