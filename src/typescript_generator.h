@@ -6,6 +6,7 @@
 #define TOOLMAN_TYPESCRIPT_GENERATOR_H_
 
 #include <memory>
+#include <vector>
 
 #include "src/field.h"
 #include "src/generator.h"
@@ -46,7 +47,11 @@ class TypescriptGenerator : public Generator {
 
  private:
   void generate_field(std::ostream& ostream, const Field* field) const {
-    ostream << field->get_name() << ": ";
+    ostream << field->get_name();
+    if (field->is_optional()) {
+      ostream  << "?";  
+    }
+    ostream  << ": ";
     if (field->get_type()->is_oneof()) {
       auto oneof = std::dynamic_pointer_cast<OneofType>(field->get_type());
       auto oneof_fields = oneof->get_fields();
