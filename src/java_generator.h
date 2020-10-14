@@ -12,7 +12,8 @@ class JavaGenerator : public Generator {
  public:
   void before_generate_document(std::ostream &ostream,
                                 const Document *document) const override {
-    auto outclass = capitalize(camelcase(document->get_file()->stem().string()));
+    auto outclass =
+        capitalize(camelcase(document->get_file()->stem().string()));
     ostream << "public final class " << outclass << " {" << NL << INDENTATION
             << "private " << outclass << "() {}";
   }
