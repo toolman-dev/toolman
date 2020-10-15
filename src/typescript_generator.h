@@ -49,9 +49,9 @@ class TypescriptGenerator : public Generator {
   void generate_field(std::ostream& ostream, const Field* field) const {
     ostream << field->get_name();
     if (field->is_optional()) {
-      ostream  << "?";  
+      ostream << "?";
     }
-    ostream  << ": ";
+    ostream << ": ";
     if (field->get_type()->is_oneof()) {
       auto oneof = std::dynamic_pointer_cast<OneofType>(field->get_type());
       auto oneof_fields = oneof->get_fields();
