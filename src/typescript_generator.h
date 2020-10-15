@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "src/field.h"
+#include "src/type.h"
 #include "src/generator.h"
 #include "src/primitive_type.h"
 
