@@ -25,13 +25,13 @@ class GolangGenerator : public Generator {
         if (field.get_type()->is_oneof()) {
           auto oneof_name =
               gen_oneof_name(struct_type->get_name(), field.get_name());
-          ostream << "type " << oneof_name << " interface {" << NL << oneof_name
-                  << "()" << NL << "}" << NL;
+          ostream << "type " << oneof_name << " interface {" << NL << INDENT_1
+                  << oneof_name << "()" << NL << "}" << NL;
           auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
           for (const auto& oneof_field : oneof->get_fields()) {
             auto capitalized_field_name = capitalize(oneof_field.get_name());
             auto struct_name = capitalized_struct_name + capitalized_field_name;
-            ostream << struct_name << " struct {" << NL
+            ostream << struct_name << " struct {" << NL << INDENT_1
                     << capitalized_field_name << " "
                     << type_to_go_type(oneof_field.get_type().get()) << NL
                     << "}" << NL2 << "func (*" << struct_name << ") "
@@ -66,15 +66,15 @@ class GolangGenerator : public Generator {
       if (field.get_type()->is_oneof()) {
         auto oneof_name =
             gen_oneof_name(struct_type->get_name(), field.get_name());
-        ostream << oneof_name + " interface {" << NL << oneof_name << "()" << NL
-                << "}" << NL;
+        ostream << oneof_name + " interface {" << NL << INDENT_1 << oneof_name
+                << "()" << NL << "}" << NL;
         auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
         for (const auto& oneof_field : oneof->get_fields()) {
           auto capitalized_field_name = capitalize(oneof_field.get_name());
           ostream << capitalized_struct_name + "_" + capitalized_field_name
-                  << " struct {" << NL << capitalized_field_name << " "
-                  << type_to_go_type(oneof_field.get_type().get()) << NL << "}"
-                  << NL;
+                  << " struct {" << NL << INDENT_1 << capitalized_field_name
+                  << " " << type_to_go_type(oneof_field.get_type().get()) << NL
+                  << "}" << NL;
         }
       }
     }

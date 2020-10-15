@@ -6,6 +6,7 @@
 #define TOOLMAN_TYPESCRIPT_GENERATOR_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "src/field.h"
@@ -16,31 +17,40 @@ namespace toolman {
 class TypescriptGenerator : public Generator {
  public:
   void before_generate_struct(std::ostream& ostream,
-                              const Document* document) const {}
+                              const Document* document) const override {}
   void after_generate_struct(std::ostream& ostream,
-                             const Document* document) const {}
+                             const Document* document) const override {}
   void before_generate_enum(std::ostream& ostream,
-                            const Document* document) const {}
+                            const Document* document) const override {}
   void after_generate_enum(std::ostream& ostream,
-                           const Document* document) const {
+                           const Document* document) const override {
     ostream << NL;
   }
 
-  void generate_struct(std::ostream& ostream,
-                       const std::shared_ptr<StructType>& struct_type) const {
+  [[nodiscard]] std::string single_line_comment(
+      std::string code) const override {
+    return "// " + code;
+  }
+
+  void generate_struct(
+      std::ostream& ostream,
+      const std::shared_ptr<StructType>& struct_type) const override {
     ostream << "export interface " << struct_type->get_name() << " {" << NL;
     for (const auto& field : struct_type->get_fields()) {
+      ostream << INDENT_1;
       generate_field(ostream, &field);
       ostream << NL;
     }
     ostream << "}" << NL;
   }
 
-  void generate_enum(std::ostream& ostream,
-                     const std::shared_ptr<EnumType>& enum_type) const {
+  void generate_enum(
+      std::ostream& ostream,
+      const std::shared_ptr<EnumType>& enum_type) const override {
     ostream << "export enum " << enum_type->get_name() << " {" << NL;
     for (const auto& field : enum_type->get_fields()) {
-      ostream << field.get_name() << "=" << field.get_value() << "," << NL;
+      ostream << INDENT_1 << field.get_name() << "=" << field.get_value() << ","
+              << NL;
     }
     ostream << "}" << NL;
   }
@@ -49,9 +59,9 @@ class TypescriptGenerator : public Generator {
   void generate_field(std::ostream& ostream, const Field* field) const {
     ostream << field->get_name();
     if (field->is_optional()) {
-      ostream  << "?";  
+      ostream << "?";
     }
-    ostream  << ": ";
+    ostream << ": ";
     if (field->get_type()->is_oneof()) {
       auto oneof = std::dynamic_pointer_cast<OneofType>(field->get_type());
       auto oneof_fields = oneof->get_fields();
@@ -65,15 +75,14 @@ class TypescriptGenerator : public Generator {
         }
       }
     } else {
-      ostream << type_to_ts_type(field->get_type());
+      ostream << type_to_ts_type(field->get_type().get());
     }
     ostream << ";";
   }
 
-  [[nodiscard]] static std::string type_to_ts_type(
-      const std::shared_ptr<Type>& type) {
+  [[nodiscard]] static std::string type_to_ts_type(Type* type) {
     if (type->is_primitive()) {
-      auto primitive = std::dynamic_pointer_cast<PrimitiveType>(type);
+      auto primitive = dynamic_cast<PrimitiveType*>(type);
       if (primitive->is_bool()) {
         return "boolean";
       } else if (primitive->is_numeric()) {
@@ -86,13 +95,13 @@ class TypescriptGenerator : public Generator {
     } else if (type->is_struct() || type->is_enum()) {
       return type->get_name();
     } else if (type->is_map()) {
-      auto map = std::dynamic_pointer_cast<MapType>(type);
-      return "{[key: " + type_to_ts_type(map->get_key_type()) +
-             "]: " + type_to_ts_type(map->get_value_type()) + ";}";
+      auto map = dynamic_cast<MapType*>(type);
+      return "{[key: " + type_to_ts_type(map->get_key_type().get()) +
+             "]: " + type_to_ts_type(map->get_value_type().get()) + ";}";
     } else if (type->is_list()) {
-      auto list = std::dynamic_pointer_cast<ListType>(type);
-      return "{[index: number]: " + type_to_ts_type(list->get_elem_type()) +
-             ";}";
+      auto list = dynamic_cast<ListType*>(type);
+      return "{[index: number]: " +
+             type_to_ts_type(list->get_elem_type().get()) + ";}";
     }
     return "";
   }
