@@ -33,9 +33,9 @@ class GolangGenerator : public Generator {
             auto struct_name = capitalized_struct_name + capitalized_field_name;
             ostream << struct_name << " struct {" << NL
                     << capitalized_field_name << " "
-                    << type_to_go_type(oneof_field.get_type()) << NL << "}"
-                    << NL << NL << "func (*" << struct_name << ") "
-                    << oneof_name << "() {}" << NL << NL;
+                    << type_to_go_type(oneof_field.get_type().get()) << NL
+                    << "}" << NL2 << "func (*" << struct_name << ") "
+                    << oneof_name << "() {}" << NL2;
           }
         }
       }
@@ -45,12 +45,17 @@ class GolangGenerator : public Generator {
 
   void after_generate_struct(std::ostream& ostream,
                              const Document* document) const override {
-    ostream << ")" << NL << NL;
+    ostream << ")" << NL2;
   }
 
   void after_generate_enum(std::ostream& ostream,
                            const Document* document) const override {
     ostream << NL;
+  }
+
+  [[nodiscard]] std::string single_line_comment(
+      std::string code) const override {
+    return "// " + code;
   }
 
   void generate_struct(
@@ -68,7 +73,8 @@ class GolangGenerator : public Generator {
           auto capitalized_field_name = capitalize(oneof_field.get_name());
           ostream << capitalized_struct_name + "_" + capitalized_field_name
                   << " struct {" << NL << capitalized_field_name << " "
-                  << type_to_go_type(oneof_field.get_type()) << NL << "}" << NL;
+                  << type_to_go_type(oneof_field.get_type().get()) << NL << "}"
+                  << NL;
         }
       }
     }
@@ -85,7 +91,7 @@ class GolangGenerator : public Generator {
               << (field.get_type()->is_oneof()
                       ? gen_oneof_name(struct_type->get_name(),
                                        field.get_name())
-                      : type_to_go_type(field.get_type()))
+                      : type_to_go_type(field.get_type().get()))
               << " `json:\"" + field.get_name() + "\"`" << NL;
     }
     ostream << "}" << NL;
@@ -113,10 +119,9 @@ class GolangGenerator : public Generator {
     return "is" + capitalize(struct_name) + "_" + capitalize(field_name);
   }
 
-  [[nodiscard]] static std::string type_to_go_type(
-      const std::shared_ptr<Type>& type) {
+  [[nodiscard]] static std::string type_to_go_type(Type* type) {
     if (type->is_primitive()) {
-      auto primitive = std::dynamic_pointer_cast<PrimitiveType>(type);
+      auto primitive = dynamic_cast<PrimitiveType*>(type);
       if (primitive->is_bool()) {
         return "bool";
       } else if (primitive->is_i32()) {
@@ -137,12 +142,12 @@ class GolangGenerator : public Generator {
     } else if (type->is_struct() || type->is_enum()) {
       return capitalize(type->get_name());
     } else if (type->is_list()) {
-      auto list = std::dynamic_pointer_cast<ListType>(type);
-      return "[]" + type_to_go_type(list->get_elem_type());
+      auto list = dynamic_cast<ListType*>(type);
+      return "[]" + type_to_go_type(list->get_elem_type().get());
     } else if (type->is_map()) {
-      auto map = std::dynamic_pointer_cast<MapType>(type);
-      return "map[" + type_to_go_type(map->get_key_type()) + "]" +
-             type_to_go_type(map->get_value_type());
+      auto map = dynamic_cast<MapType*>(type);
+      return "map[" + type_to_go_type(map->get_key_type().get()) + "]" +
+             type_to_go_type(map->get_value_type().get());
     }
     return "";
   }
