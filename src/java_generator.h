@@ -49,7 +49,10 @@ class JavaGenerator : public Generator {
             ostream << INDENT_1 << "public class " << oneof_item_class_name
                     << " implements " << oneof_name << " {" << NL << INDENT_2
                     << generate_struct_field(struct_type.get(), oneof_field)
-                    << NL << INDENT_1 << "}" << NL;
+                    << NL
+                    << generate_getter_and_setter(struct_type.get(),
+                                                  oneof_field, INDENT_2)
+                    << INDENT_1 << "}" << NL;
           }
         }
       }
@@ -60,6 +63,7 @@ class JavaGenerator : public Generator {
       std::string code) const override {
     return "// " + code;
   }
+
   void generate_struct(
       std::ostream &ostream,
       const std::shared_ptr<StructType> &struct_type) const override {
@@ -72,6 +76,11 @@ class JavaGenerator : public Generator {
       ostream << INDENT_2 << generate_struct_field(struct_type.get(), field)
               << NL;
     }
+    ostream << NL;
+
+    for (const auto &field : struct_type->get_fields()) {
+      ostream << generate_getter_and_setter(struct_type.get(), field, INDENT_2);
+    }
 
     ostream << INDENT_1 << "}" << NL2;
   }
@@ -83,8 +92,8 @@ class JavaGenerator : public Generator {
             << NL;
 
     for (const auto &field : enum_type->get_fields()) {
-      ostream << INDENT_2 << field.get_name() << "(" << field.get_value()
-              << ")," << NL;
+      ostream << INDENT_2 << camelcase(field.get_name()) << "("
+              << field.get_value() << ")," << NL;
     }
     ostream << INDENT_2 << ";" << NL;
 
@@ -96,7 +105,8 @@ class JavaGenerator : public Generator {
     for (const auto &field : enum_type->get_fields()) {
       ostream << INDENT_4 << "case " << field.get_value() << ": return "
               << (use_java8_optional_ ? "java.util.Optional.of(" : "")
-              << field.get_name() << (use_java8_optional_ ? ");" : ";") << NL;
+              << camelcase(field.get_name())
+              << (use_java8_optional_ ? ");" : ";") << NL;
     }
     ostream << INDENT_4 << "default: return "
             << (use_java8_optional_ ? "java.util.Optional.empty();" : "NULL;")
@@ -124,17 +134,25 @@ class JavaGenerator : public Generator {
                                          const Field &field,
                                          const std::string &base_indent) const {
     auto use_optional = use_java8_optional_ && field.is_optional();
+    auto field_name_camelcase = camelcase(field.get_name());
     // getter
     auto getter =
         base_indent +
         (use_optional ? "public java.util.Optional<" : "public ") +
         type_to_java_type(field.get_type().get(), field.is_optional()) +
-        (use_optional ? "> get" : " get") + capitalize(field.get_name()) +
-        "() {" + NL + base_indent + INDENT_1 + "return token;" + NL +
-        base_indent + "}";
+        (use_optional ? "> get" : " get") + capitalize(field_name_camelcase) +
+        "() {" + NL + base_indent + INDENT_1 + "return " +
+        field_name_camelcase + ";" + NL + base_indent + "}" + NL;
 
     // setter
-    auto setter = base_indent + ()
+    auto setter =
+        base_indent + "public void set" + capitalize(field_name_camelcase) +
+        "(" + (use_optional ? "java.util.Optional<" : "") +
+        type_to_java_type(field.get_type().get(), field.is_optional()) + " " +
+        field_name_camelcase + ") {" + NL + base_indent + INDENT_1 + "this." +
+        field_name_camelcase + " = " + field_name_camelcase + ";" + NL +
+        base_indent + "}";
+    return getter + setter + NL;
   }
 
   static std::string gen_oneof_name(const std::string &struct_name,
@@ -175,6 +193,6 @@ class JavaGenerator : public Generator {
     return "";
   }
   bool use_java8_optional_;
-};  // namespace toolman
+};
 }  // namespace toolman
 #endif  // TOOLMAN_GOLANG_GENERATOR_H_
