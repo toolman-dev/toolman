@@ -6,8 +6,11 @@
 #define TOOLMAN_TYPESCRIPT_GENERATOR_H_
 
 #include <memory>
+#include <vector>
 
+#include "src/field.h"
 #include "src/generator.h"
+#include "src/primitive_type.h"
 
 namespace toolman {
 class TypescriptGenerator : public Generator {
@@ -25,21 +28,46 @@ class TypescriptGenerator : public Generator {
 
   void generate_struct(std::ostream& ostream,
                        const std::shared_ptr<StructType>& struct_type) const {
-    ostream << "interface " << struct_type->get_name() << " {" << NL;
+    ostream << "export interface " << struct_type->get_name() << " {" << NL;
     for (const auto& field : struct_type->get_fields()) {
-      ostream << field.get_name() << ": " << type_to_ts_type(field.get_type())
-              << ";" << NL;
+      generate_field(ostream, &field);
+      ostream << NL;
     }
     ostream << "}" << NL;
   }
 
   void generate_enum(std::ostream& ostream,
                      const std::shared_ptr<EnumType>& enum_type) const {
-    ostream << "enum " << enum_type->get_name() << " {" << NL;
+    ostream << "export enum " << enum_type->get_name() << " {" << NL;
     for (const auto& field : enum_type->get_fields()) {
       ostream << field.get_name() << "=" << field.get_value() << "," << NL;
     }
     ostream << "}" << NL;
+  }
+
+ private:
+  void generate_field(std::ostream& ostream, const Field* field) const {
+    ostream << field->get_name();
+    if (field->is_optional()) {
+      ostream  << "?";  
+    }
+    ostream  << ": ";
+    if (field->get_type()->is_oneof()) {
+      auto oneof = std::dynamic_pointer_cast<OneofType>(field->get_type());
+      auto oneof_fields = oneof->get_fields();
+      for (std::vector<Field>::iterator it = oneof_fields.begin();
+           it != oneof_fields.end(); ++it) {
+        ostream << "{ ";
+        generate_field(ostream, &(*it));
+        ostream << " }";
+        if (it != (oneof_fields.end() - 1)) {
+          ostream << " | ";
+        }
+      }
+    } else {
+      ostream << type_to_ts_type(field->get_type());
+    }
+    ostream << ";";
   }
 
   [[nodiscard]] static std::string type_to_ts_type(
