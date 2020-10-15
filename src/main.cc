@@ -39,11 +39,11 @@ int main(int, char **) {
 
     walker.walk(&def_phase_walker, tree);
 
-    bool has_fetal = false;
+    bool has_fatal = false;
 
     for (const auto &error : def_phase_walker.get_errors()) {
-      if (!has_fetal && error.is_fatal()) {
-        has_fetal = true;
+      if (!has_fatal && error.is_fatal()) {
+          has_fatal = true;
       }
       std::cout << error.error() << std::endl << std::endl;
     }
@@ -55,14 +55,14 @@ int main(int, char **) {
     walker.walk(&ref_phase_walker, tree);
 
     for (const auto &error : ref_phase_walker.get_errors()) {
-      if (!has_fetal && error.is_fatal()) {
-        has_fetal = true;
+      if (!has_fatal && error.is_fatal()) {
+          has_fatal = true;
       }
       std::cout << error.error() << std::endl << std::endl;
     }
 
     // std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
-    if (!has_fetal) {
+    if (!has_fatal) {
       toolman::JavaGenerator g;
       g.generate(std::cout, ref_phase_walker.get_document());
     }
