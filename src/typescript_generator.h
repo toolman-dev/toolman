@@ -10,18 +10,13 @@
 #include <vector>
 
 #include "src/field.h"
+#include "src/type.h"
 #include "src/generator.h"
 #include "src/primitive_type.h"
 
 namespace toolman {
 class TypescriptGenerator : public Generator {
  public:
-  void before_generate_struct(std::ostream& ostream,
-                              const Document* document) const override {}
-  void after_generate_struct(std::ostream& ostream,
-                             const Document* document) const override {}
-  void before_generate_enum(std::ostream& ostream,
-                            const Document* document) const override {}
   void after_generate_enum(std::ostream& ostream,
                            const Document* document) const override {
     ostream << NL;
