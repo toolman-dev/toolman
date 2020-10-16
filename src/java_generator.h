@@ -23,7 +23,7 @@ class JavaGenerator : public Generator {
                                 const Document *document) override {
     // process option
     for (const auto &opt : document->get_options()) {
-      if (opt->get_name() == buildin::option_use_java8_optional.type_name()) {
+      if (opt->get_name() == buildin::option_use_java8_optional.get_name()) {
         auto bool_opt = std::dynamic_pointer_cast<decltype(
             buildin::option_use_java8_optional)>(opt);
         use_java8_optional_ = bool_opt->get_value();
