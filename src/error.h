@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "enum_field.h"
+#include "src/option.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
@@ -95,6 +96,25 @@ class RecursiveOneofTypeError final : public Error {
   explicit RecursiveOneofTypeError(SI&& stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "oneof type does not allow recursion") {}
+};
+
+class UnknownOptionError final : public Error {
+ public:
+  template <typename SI>
+  explicit UnknownOptionError(const std::string& option_name,
+                              SI&& option_name_stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "Option \"" + option_name + "\" unknown.") {}
+};
+
+class OptionTypeMismatchError final : public Error {
+ public:
+  template <typename SI>
+  OptionTypeMismatchError(Option* option, SI&& option_value_stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "Value must be " + option->type_name() + " for " +
+                  option->type_name() + " option \"" + option->get_name() +
+                  "\".") {}
 };
 
 }  // namespace toolman

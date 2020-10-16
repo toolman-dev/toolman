@@ -14,26 +14,33 @@
 #include "src/list_type.h"
 #include "src/map_type.h"
 #include "src/primitive_type.h"
+#include "src/scope.h"
 
 namespace toolman {
 class JavaGenerator : public Generator {
  public:
-  explicit JavaGenerator(bool use_java8_optional = false)
-      : use_java8_optional_(use_java8_optional) {}
   void before_generate_document(std::ostream &ostream,
-                                const Document *document) const override {
+                                const Document *document) override {
+    // process option
+    for (const auto &opt : document->get_options()) {
+      if (opt->get_name() == "use_java8_optional") {
+        auto bool_opt = std::dynamic_pointer_cast<BoolOption>(opt);
+        use_java8_optional_ = bool_opt->get_value();
+      }
+    }
+
     auto outclass =
         capitalize(camelcase(document->get_file()->stem().string()));
     ostream << "public final class " << outclass << " {" << NL << INDENT_1
             << "private " << outclass << "() {}" << NL;
   }
   void after_generate_document(std::ostream &ostream,
-                               const Document *document) const override {
+                               const Document *document) override {
     ostream << NL << "}" << NL;
   }
 
   void before_generate_struct(std::ostream &ostream,
-                              const Document *document) const override {
+                              const Document *document) override {
     for (const auto &struct_type : document->get_struct_types()) {
       auto struct_name = capitalize(camelcase(struct_type->get_name()));
       for (const auto &field : struct_type->get_fields()) {
@@ -66,7 +73,7 @@ class JavaGenerator : public Generator {
 
   void generate_struct(
       std::ostream &ostream,
-      const std::shared_ptr<StructType> &struct_type) const override {
+      const std::shared_ptr<StructType> &struct_type) override {
     ostream << INDENT_1 << "public static final class "
             << struct_type->get_name() << " implements java.io.Serializable {"
             << NL << INDENT_2
@@ -85,9 +92,8 @@ class JavaGenerator : public Generator {
     ostream << INDENT_1 << "}" << NL2;
   }
 
-  void generate_enum(
-      std::ostream &ostream,
-      const std::shared_ptr<EnumType> &enum_type) const override {
+  void generate_enum(std::ostream &ostream,
+                     const std::shared_ptr<EnumType> &enum_type) override {
     ostream << INDENT_1 << "public enum " << enum_type->get_name() << " {"
             << NL;
 
@@ -192,7 +198,7 @@ class JavaGenerator : public Generator {
     }
     return "";
   }
-  bool use_java8_optional_;
+  bool use_java8_optional_ = false;
 };
 }  // namespace toolman
 #endif  // TOOLMAN_GOLANG_GENERATOR_H_

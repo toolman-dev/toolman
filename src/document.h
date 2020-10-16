@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "src/custom_type.h"
+#include "src/option.h"
 #include "src/type.h"
 
 namespace toolman {
@@ -25,12 +26,21 @@ class Document final {
     return enum_types_;
   }
 
+  [[nodiscard]] const std::vector<std::shared_ptr<Option>>& get_options()
+      const {
+    return options_;
+  }
+
   void insert_struct_type(std::shared_ptr<StructType> st) {
     struct_types_.emplace_back(std::move(st));
   }
 
   void insert_enum_type(std::shared_ptr<EnumType> et) {
     enum_types_.emplace_back(std::move(et));
+  }
+
+  void insert_option(std::shared_ptr<Option> option) {
+    options_.emplace_back(std::move(option));
   }
 
   [[nodiscard]] std::shared_ptr<std::filesystem::path> get_file() const {
@@ -44,6 +54,7 @@ class Document final {
  private:
   std::vector<std::shared_ptr<StructType>> struct_types_;
   std::vector<std::shared_ptr<EnumType>> enum_types_;
+  std::vector<std::shared_ptr<Option>> options_;
   std::shared_ptr<std::filesystem::path> file_;
 };
 }  // namespace toolman

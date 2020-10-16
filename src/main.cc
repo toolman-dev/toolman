@@ -43,20 +43,20 @@ int main(int, char **) {
 
     for (const auto &error : def_phase_walker.get_errors()) {
       if (!has_fatal && error.is_fatal()) {
-          has_fatal = true;
+        has_fatal = true;
       }
       std::cout << error.error() << std::endl << std::endl;
     }
 
-    auto ref_phase_walker =
-        RefPhaseWalker(def_phase_walker.get_type_scope(),
-                       std::make_shared<std::filesystem::path>(filename));
+    auto ref_phase_walker = RefPhaseWalker(
+        def_phase_walker.get_type_scope(), def_phase_walker.get_option_scope(),
+        std::make_shared<std::filesystem::path>(filename));
 
     walker.walk(&ref_phase_walker, tree);
 
     for (const auto &error : ref_phase_walker.get_errors()) {
       if (!has_fatal && error.is_fatal()) {
-          has_fatal = true;
+        has_fatal = true;
       }
       std::cout << error.error() << std::endl << std::endl;
     }

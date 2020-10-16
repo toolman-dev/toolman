@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "ToolmanLexer.h"
 #include "ToolmanParserBaseListener.h"
 #include "src/custom_type.h"
 #include "src/document.h"
@@ -36,7 +37,13 @@ StmtInfo get_stmt_info(NODE* node, FILE&& file) {
 class DeclPhaseWalker final : public ToolmanParserBaseListener {
  public:
   explicit DeclPhaseWalker(std::shared_ptr<std::filesystem::path> file)
-      : type_scope_(std::make_shared<Scope>(Scope())), file_(std::move(file)) {}
+      : type_scope_(std::make_shared<TypeScope>()),
+        option_scope_(std::make_shared<OptionScope>()),
+        file_(std::move(file)) {
+      option_scope_->declare(std::make_shared<BoolOption>("use_java8_optional"));
+      option_scope_->declare(std::make_shared<StringOption>("java_package"));
+  }
+
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
     decl_type<ToolmanParser::StructDeclContext, StructType>(node);
   }
@@ -45,22 +52,21 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
     decl_type<ToolmanParser::EnumDeclContext, EnumType>(node);
   }
 
-  [[nodiscard]] const std::shared_ptr<Scope>& get_type_scope() const {
+  [[nodiscard]] const std::shared_ptr<TypeScope>& get_type_scope() const {
     return type_scope_;
+  }
+
+  [[nodiscard]] const std::shared_ptr<OptionScope>& get_option_scope() const {
+    return option_scope_;
   }
 
   [[nodiscard]] const std::vector<Error>& get_errors() const { return errors_; }
 
  private:
-  std::shared_ptr<Scope> type_scope_;
-  std::vector<Error> errors_;
-  std::shared_ptr<std::filesystem::path> file_;
-
   template <typename NODE, typename DECL_TYPE>
   void decl_type(NODE* node) {
     StmtInfo stmt_info = get_stmt_info(node->identifierName(), file_);
-    if (auto search =
-            type_scope_->lookup_type(node->identifierName()->getText());
+    if (auto search = type_scope_->lookup(node->identifierName()->getText());
         search.has_value()) {
       errors_.emplace_back(DuplicateTypeDeclError(search.value(), stmt_info));
       return;
@@ -70,6 +76,11 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
                     node->Pub() != nullptr)));
     }
   }
+
+  std::shared_ptr<TypeScope> type_scope_;
+  std::shared_ptr<OptionScope> option_scope_;
+  std::vector<Error> errors_;
+  std::shared_ptr<std::filesystem::path> file_;
 };
 
 class FieldTypeBuilder {
@@ -159,11 +170,14 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
  public:
   enum class BuildState : char { IN_STRUCT, IN_ONEOF, RECURSIVE_ONFOF };
 
-  RefPhaseWalker(std::shared_ptr<Scope> type_scope,
+  RefPhaseWalker(std::shared_ptr<TypeScope> type_scope,
+                 std::shared_ptr<OptionScope> option_scope,
                  std::shared_ptr<std::filesystem::path> file)
       : type_scope_(std::move(type_scope)),
+        option_scope_(std::move(option_scope)),
         file_(std::move(file)),
-        enum_builder_() {}
+        enum_builder_(),
+        build_state_(BuildState::IN_STRUCT) {}
   std::unique_ptr<Document> get_document() {
     return std::unique_ptr<Document>(document_.release());
   }
@@ -175,10 +189,42 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     document_->set_file(file_);
   }
 
+  void enterOptionStatement(
+      ToolmanParser::OptionStatementContext* node) override {
+    auto search_opt = option_scope_->lookup(node->identifierName()->getText());
+    if (!search_opt.has_value()) {
+      errors_.push_back(
+          UnknownOptionError(node->identifierName()->getText(),
+                             get_stmt_info(node->identifierName(), file_)));
+    } else {
+      auto search = search_opt.value();
+      auto option_value_node = node->optionValue();
+      if (option_value_node->BooleanLiteral() != nullptr && search->is_bool()) {
+        auto bool_option = std::dynamic_pointer_cast<BoolOption>(search);
+        bool_option->set_value(option_value_node->BooleanLiteral()->getText() ==
+                               "true");
+        document_->insert_option(bool_option);
+      } else if (option_value_node->StringLiteral() != nullptr &&
+                 search->is_string()) {
+        auto string_option = std::dynamic_pointer_cast<StringOption>(search);
+        string_option->set_value(option_value_node->StringLiteral()->getText());
+        document_->insert_option(string_option);
+      } else if (option_value_node->numericLiteral() != nullptr &&
+                 search->is_numeric()) {
+        auto numeric_option = std::dynamic_pointer_cast<NumericOption>(search);
+        numeric_option->set_value(
+            std::stod(option_value_node->numericLiteral()->getText()));
+        document_->insert_option(numeric_option);
+      } else {
+        errors_.emplace_back(OptionTypeMismatchError(
+            search.get(), get_stmt_info(option_value_node, file_)));
+      }
+    }
+  }
+
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
     auto type_name = node->identifierName()->getText();
-    auto search_opt =
-        type_scope_->lookup_type(node->identifierName()->getText());
+    auto search_opt = type_scope_->lookup(node->identifierName()->getText());
     if (!search_opt.has_value()) {
       // Logically, this situation will not happen
       throw std::runtime_error("The type name`" + type_name + "` not found.");
@@ -311,8 +357,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterCustomTypeName(
       ToolmanParser::CustomTypeNameContext* node) override {
-    auto custom_type =
-        type_scope_->lookup_type(node->identifierName()->getText());
+    auto custom_type = type_scope_->lookup(node->identifierName()->getText());
     if (!custom_type.has_value()) {
       errors_.emplace_back(CustomTypeNotFoundError(
           node->identifierName()->getText(), get_stmt_info(node, file_)));
@@ -333,8 +378,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterEnumDecl(ToolmanParser::EnumDeclContext* node) override {
     auto type_name = node->identifierName()->getText();
-    auto search_opt =
-        type_scope_->lookup_type(node->identifierName()->getText());
+    auto search_opt = type_scope_->lookup(node->identifierName()->getText());
     if (!search_opt.has_value()) {
       // Logically, this situation will not happen
       throw std::runtime_error("The type name`" + type_name + "` not found.");
@@ -397,7 +441,8 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   FieldTypeBuilder field_type_builder_;
   CustomTypeBuilder<EnumField> enum_builder_;
   CustomTypeBuilder<Field> oneof_builder_;
-  std::shared_ptr<Scope> type_scope_;
+  std::shared_ptr<TypeScope> type_scope_;
+  std::shared_ptr<OptionScope> option_scope_;
   std::shared_ptr<std::filesystem::path> file_;
   std::vector<Error> errors_;
   BuildState build_state_;

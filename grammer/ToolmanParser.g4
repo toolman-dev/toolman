@@ -9,13 +9,23 @@ options {
 	tokenVocab = ToolmanLexer;
 }
 
-document: (importStatement | decl)* EOF;
+document: (importStatement | optionStatement | decl)* EOF;
 
 // import {someType as aliasName, ...} from '/path/to/xx.tm'
 importStatement:
 	Import OpenBrace identifierName (As identifierName)? (
 		Comma identifierName (As identifierName)?
 	)* CloseBrace From StringLiteral SemiColon;
+
+//
+// Option
+//
+
+optionStatement
+    :   Option identifierName Assign optionValue SemiColon
+    ;
+
+optionValue: BooleanLiteral|numericLiteral|StringLiteral;
 
 decl: typeDecl | apiDecl;
 
@@ -70,7 +80,7 @@ enumItem: identifierName Doublecolon identifierName;
 
 identifierName: Identifier | reservedWord;
 
-reservedWord: keyword;
+reservedWord: keyword | BooleanLiteral;
 
 keyword:
 	Struct
@@ -92,6 +102,13 @@ keyword:
 
 intgerLiteral:
 	DecIntegerLiteral
+	| HexIntegerLiteral
+	| OctalIntegerLiteral
+	| BinaryIntegerLiteral;
+
+numericLiteral:
+	DecIntegerLiteral
+	| DecimalLiteral
 	| HexIntegerLiteral
 	| OctalIntegerLiteral
 	| BinaryIntegerLiteral;

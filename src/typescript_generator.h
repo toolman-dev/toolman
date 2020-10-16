@@ -10,15 +10,17 @@
 #include <vector>
 
 #include "src/field.h"
-#include "src/type.h"
 #include "src/generator.h"
+#include "src/list_type.h"
+#include "src/map_type.h"
 #include "src/primitive_type.h"
+#include "src/type.h"
 
 namespace toolman {
 class TypescriptGenerator : public Generator {
  public:
   void after_generate_enum(std::ostream& ostream,
-                           const Document* document) const override {
+                           const Document* document) override {
     ostream << NL;
   }
 
@@ -29,7 +31,7 @@ class TypescriptGenerator : public Generator {
 
   void generate_struct(
       std::ostream& ostream,
-      const std::shared_ptr<StructType>& struct_type) const override {
+      const std::shared_ptr<StructType>& struct_type) override {
     ostream << "export interface " << struct_type->get_name() << " {" << NL;
     for (const auto& field : struct_type->get_fields()) {
       ostream << INDENT_1;
@@ -39,9 +41,8 @@ class TypescriptGenerator : public Generator {
     ostream << "}" << NL;
   }
 
-  void generate_enum(
-      std::ostream& ostream,
-      const std::shared_ptr<EnumType>& enum_type) const override {
+  void generate_enum(std::ostream& ostream,
+                     const std::shared_ptr<EnumType>& enum_type) override {
     ostream << "export enum " << enum_type->get_name() << " {" << NL;
     for (const auto& field : enum_type->get_fields()) {
       ostream << INDENT_1 << field.get_name() << "=" << field.get_value() << ","
@@ -60,8 +61,7 @@ class TypescriptGenerator : public Generator {
     if (field->get_type()->is_oneof()) {
       auto oneof = std::dynamic_pointer_cast<OneofType>(field->get_type());
       auto oneof_fields = oneof->get_fields();
-      for (std::vector<Field>::iterator it = oneof_fields.begin();
-           it != oneof_fields.end(); ++it) {
+      for (auto it = oneof_fields.begin(); it != oneof_fields.end(); ++it) {
         ostream << "{ ";
         generate_field(ostream, &(*it));
         ostream << " }";

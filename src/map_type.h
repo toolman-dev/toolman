@@ -20,7 +20,7 @@ class MapType final : public Type {
   using ValueType = Type;
 
   template <typename SI>
-  MapType(SI&& stmt_info) : Type("map", std::forward<SI>(stmt_info)) {}
+  explicit MapType(SI&& stmt_info) : Type("map", std::forward<SI>(stmt_info)) {}
 
   template <typename SI>
   MapType(std::shared_ptr<PrimitiveType> key_type,

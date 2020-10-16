@@ -18,7 +18,7 @@ namespace toolman {
 class GolangGenerator : public Generator {
  public:
   void before_generate_struct(std::ostream& ostream,
-                              const Document* document) const override {
+                              const Document* document) override {
     for (const auto& struct_type : document->get_struct_types()) {
       auto capitalized_struct_name = capitalize(struct_type->get_name());
       for (const auto& field : struct_type->get_fields()) {
@@ -44,12 +44,12 @@ class GolangGenerator : public Generator {
   }
 
   void after_generate_struct(std::ostream& ostream,
-                             const Document* document) const override {
+                             const Document* document) override {
     ostream << ")" << NL2;
   }
 
   void after_generate_enum(std::ostream& ostream,
-                           const Document* document) const override {
+                           const Document* document) override {
     ostream << NL;
   }
 
@@ -60,7 +60,7 @@ class GolangGenerator : public Generator {
 
   void generate_struct(
       std::ostream& ostream,
-      const std::shared_ptr<StructType>& struct_type) const override {
+      const std::shared_ptr<StructType>& struct_type) override {
     auto capitalized_struct_name = capitalize(struct_type->get_name());
     for (const auto& field : struct_type->get_fields()) {
       if (field.get_type()->is_oneof()) {
@@ -71,7 +71,7 @@ class GolangGenerator : public Generator {
         auto oneof = std::dynamic_pointer_cast<OneofType>(field.get_type());
         for (const auto& oneof_field : oneof->get_fields()) {
           auto capitalized_field_name = capitalize(oneof_field.get_name());
-          ostream << capitalized_struct_name + "_" + capitalized_field_name
+          ostream << capitalized_struct_name << "_" << capitalized_field_name
                   << " struct {" << NL << INDENT_1 << capitalized_field_name
                   << " " << type_to_go_type(oneof_field.get_type().get()) << NL
                   << "}" << NL;
@@ -97,9 +97,8 @@ class GolangGenerator : public Generator {
     ostream << "}" << NL;
   }
 
-  void generate_enum(
-      std::ostream& ostream,
-      const std::shared_ptr<EnumType>& enum_type) const override {
+  void generate_enum(std::ostream& ostream,
+                     const std::shared_ptr<EnumType>& enum_type) override {
     auto capitalized_name = capitalize(enum_type->get_name());
     ostream << "type "
             << (enum_type->is_public() ? capitalized_name
