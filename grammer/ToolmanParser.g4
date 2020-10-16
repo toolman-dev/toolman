@@ -42,10 +42,10 @@ signleTypeDecl: structDecl | enumDecl;
 apiDecl: Api; // TODO
 
 structDecl:
-	Pub? identifierName Struct OpenBrace structFieldList* CloseBrace;
+	identifierName Struct OpenBrace structFieldList* CloseBrace;
 
 enumDecl:
-	Pub? identifierName Enum OpenBrace enumFieldList+ CloseBrace;
+	identifierName Enum OpenBrace enumFieldList+ CloseBrace;
 
 /// toolman types
 type_:
@@ -85,7 +85,6 @@ reservedWord: keyword | BooleanLiteral;
 keyword:
 	Struct
 	| Enum
-	| Pub
 	| Import
 	| As
 	| From

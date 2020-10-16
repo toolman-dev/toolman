@@ -13,8 +13,8 @@
 #include "src/golang_generator.h"
 #include "src/java_generator.h"
 #include "src/scope.h"
-#include "src/walker.h"
 #include "src/typescript_generator.h"
+#include "src/walker.h"
 
 using toolman::DeclPhaseWalker;
 using toolman::RefPhaseWalker;

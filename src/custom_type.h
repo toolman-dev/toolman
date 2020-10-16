@@ -20,9 +20,9 @@ template <typename F>
 class CustomType : public Type {
  public:
   template <typename S, typename SI>
-  CustomType(S&& name, SI&& stmt_info, bool is_public)
-      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)),
-        is_public_(is_public) {}
+  CustomType(S&& name, SI&& stmt_info)
+      : Type(std::forward<S>(name), std::forward<SI>(stmt_info))
+      {}
 
   bool append_field(F f) {
     // returns false when there is a conflict of field names
@@ -45,15 +45,12 @@ class CustomType : public Type {
     return std::nullopt;
   }
 
-  [[nodiscard]] bool is_public() const { return is_public_; }
-
   bool operator==(const Type& rhs) const override {
     return get_name() == rhs.get_name();
   };
 
  private:
   std::vector<F> fields_;
-  bool is_public_;
 };
 
 class StructType final : public CustomType<Field> {
@@ -91,7 +88,7 @@ class EnumType final : public CustomType<EnumField> {
 class OneofType final : public CustomType<Field> {
  public:
   template <typename SI>
-  OneofType(SI&& stmt_info)
+  explicit OneofType(SI&& stmt_info)
       : CustomType("oneof", std::forward<SI>(stmt_info), false) {}
 
   [[nodiscard]] bool is_oneof() const override { return true; }

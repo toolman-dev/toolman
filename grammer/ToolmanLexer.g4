@@ -50,7 +50,6 @@ BinaryIntegerLiteral: '0' [bB] [01]+;
 /// Keywords
 Struct: 'struct';
 Enum: 'enum';
-Pub: 'pub';
 Import: 'import';
 As: 'as';
 From: 'from';

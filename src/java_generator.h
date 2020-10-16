@@ -116,7 +116,7 @@ class JavaGenerator : public Generator {
               << (use_java8_optional_ ? ");" : ";") << NL;
     }
     ostream << INDENT_4 << "default: return "
-            << (use_java8_optional_ ? "java.util.Optional.empty();" : "NULL;")
+            << (use_java8_optional_ ? "java.util.Optional.empty();" : "null;")
             << NL << INDENT_3 << "}" << NL << INDENT_2 << "}" << NL;
 
     ostream << INDENT_2 << "private final int value;" << NL << INDENT_2
