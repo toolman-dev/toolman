@@ -14,6 +14,7 @@
 #include "src/java_generator.h"
 #include "src/scope.h"
 #include "src/walker.h"
+#include "src/typescript_generator.h"
 
 using toolman::DeclPhaseWalker;
 using toolman::RefPhaseWalker;
