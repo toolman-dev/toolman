@@ -11,21 +11,25 @@ options {
 
 document: (importStatement | optionStatement | decl)* EOF;
 
-// import {someType as aliasName, ...} from '/path/to/xx.tm'
-importStatement:
-	Import OpenBrace identifierName (As identifierName)? (
-		Comma identifierName (As identifierName)?
-	)* CloseBrace From StringLiteral SemiColon;
+// from '/pathxxx.tm' import someType as aliasName, ...
+importStatement: From StringLiteral Import SemiColon;
 
+importList:
+	identifierName (As identifierName)? (
+		Comma identifierName (As identifierName)?
+	)*
+	| Star;
 //
 // Option
+// 
+//
+// 
 //
 
-optionStatement
-    :   Option identifierName Assign optionValue SemiColon
-    ;
+optionStatement:
+	Option identifierName Assign optionValue SemiColon;
 
-optionValue: BooleanLiteral|numericLiteral|StringLiteral;
+optionValue: BooleanLiteral | numericLiteral | StringLiteral;
 
 decl: typeDecl | apiDecl;
 
@@ -49,11 +53,11 @@ enumDecl:
 
 /// toolman types
 type_:
-	(String | I32 | I64 | U32 | U64 | Float | Bool | Any)	# PrimitiveType
+	(String | I32 | I64 | U32 | U64 | Float | Bool | Any) # PrimitiveType
 	// [SomeType]
-	| OpenBracket listElementType CloseBracket				# ListType
+	| OpenBracket listElementType CloseBracket # ListType
 	// {keyType: valueType}
-	| OpenBrace mapKeyType Colon mapValueType CloseBrace	# MapType
+	| OpenBrace mapKeyType Colon mapValueType CloseBrace # MapType
 	// (fieldName: SomeType|fieldName: OtherType)
 	| OpenParen structField (Or structField)+ CloseParen	# OneofType
 	| identifierName										# CustomTypeName;
@@ -68,8 +72,7 @@ fieldType: type_;
 
 structFieldList: structField (Comma structField)*;
 
-structField:
-	identifierName Colon fieldType QuestionMark?;
+structField: identifierName Colon fieldType QuestionMark?;
 
 enumFieldList: enumField (Comma enumField)*;
 

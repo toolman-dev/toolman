@@ -21,8 +21,7 @@ class CustomType : public Type {
  public:
   template <typename S, typename SI>
   CustomType(S&& name, SI&& stmt_info)
-      : Type(std::forward<S>(name), std::forward<SI>(stmt_info))
-      {}
+      : Type(std::forward<S>(name), std::forward<SI>(stmt_info)) {}
 
   bool append_field(F f) {
     // returns false when there is a conflict of field names

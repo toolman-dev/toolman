@@ -1,8 +1,7 @@
 /**
  * A Toolman lexer grammar for ANTLR v4.
  * 
- * @author taoyu
- * @author taowei
+ * @author taoyu @author taowei
  */
 lexer grammar ToolmanLexer;
 
@@ -28,6 +27,7 @@ Colon: ':';
 Doublecolon: '::';
 Ellipsis: '...';
 Or: '|';
+Star: '*';
 
 /// Boolean Literals
 
@@ -41,7 +41,6 @@ DecimalLiteral:
 	DecimalIntegerLiteral '.' [0-9]* ExponentPart?
 	| '.' [0-9]+ ExponentPart?
 	| DecimalIntegerLiteral ExponentPart?;
-
 
 HexIntegerLiteral: '0' [xX] HexDigit+;
 OctalIntegerLiteral: '0' [oO] [0-7]+;
