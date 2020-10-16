@@ -44,5 +44,12 @@ class TypeScope final : public Scope<Type> {};
 
 class OptionScope final : public Scope<Option> {};
 
+namespace buildin {
+const auto option_use_java8_optional = BoolOption("use_java8_optional");
+const auto option_java_package = StringOption("java_package");
+
+void decl_buildin_option(OptionScope* option_scope);
+}  // namespace buildin
+
 }  // namespace toolman
 #endif  // TOOLMAN_SCOPE_H_

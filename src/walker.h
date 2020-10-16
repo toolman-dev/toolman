@@ -40,8 +40,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
       : type_scope_(std::make_shared<TypeScope>()),
         option_scope_(std::make_shared<OptionScope>()),
         file_(std::move(file)) {
-      option_scope_->declare(std::make_shared<BoolOption>("use_java8_optional"));
-      option_scope_->declare(std::make_shared<StringOption>("java_package"));
+    buildin::decl_buildin_option(option_scope_.get());
   }
 
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
