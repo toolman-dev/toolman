@@ -88,7 +88,7 @@ class OneofType final : public CustomType<Field> {
  public:
   template <typename SI>
   explicit OneofType(SI&& stmt_info)
-      : CustomType("oneof", std::forward<SI>(stmt_info), false) {}
+      : CustomType("oneof", std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] bool is_oneof() const override { return true; }
   [[nodiscard]] std::string to_string() const override { return "oneof(...)"; }

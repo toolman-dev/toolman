@@ -71,8 +71,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
       return;
     } else {
       type_scope_->declare(std::make_shared<DECL_TYPE>(
-          DECL_TYPE(node->identifierName()->getText(), stmt_info,
-                    node->Pub() != nullptr)));
+          DECL_TYPE(node->identifierName()->getText(), stmt_info)));
     }
   }
 
