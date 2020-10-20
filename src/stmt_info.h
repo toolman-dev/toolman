@@ -14,16 +14,16 @@ namespace toolman {
 class StmtInfo final {
  public:
   StmtInfo(unsigned int start_line_no, unsigned int start_column_no,
-           std::shared_ptr<std::filesystem::path> file)
+           std::shared_ptr<std::filesystem::path> source)
       : line_no_({start_line_no, 0}),
         column_no_({start_column_no, 0}),
-        file_(std::move(file)) {}
+        source_(std::move(source)) {}
   StmtInfo(std::pair<unsigned int, unsigned int> line_no,
            std::pair<unsigned int, unsigned int> column_no,
-           std::shared_ptr<std::filesystem::path> file)
+           std::shared_ptr<std::filesystem::path> source)
       : line_no_(std::move(line_no)),
         column_no_(std::move(column_no)),
-        file_(std::move(file)) {}
+        source_(std::move(source)) {}
   [[nodiscard]] const std::pair<unsigned int, unsigned int>& get_line_no()
       const {
     return line_no_;
@@ -32,8 +32,8 @@ class StmtInfo final {
       const {
     return column_no_;
   }
-  [[nodiscard]] std::shared_ptr<std::filesystem::path> get_file() const {
-    return file_;
+  [[nodiscard]] std::shared_ptr<std::filesystem::path> get_source() const {
+    return source_;
   }
 
   void set_end_line_no(unsigned int end_line_no) {
@@ -47,7 +47,7 @@ class StmtInfo final {
  protected:
   std::pair<unsigned int, unsigned int> line_no_;
   std::pair<unsigned int, unsigned int> column_no_;
-  std::shared_ptr<std::filesystem::path> file_;
+  std::shared_ptr<std::filesystem::path> source_;
 };
 
 class HasStmtInfo {

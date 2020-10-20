@@ -18,7 +18,7 @@
 
 namespace toolman {
 class TypescriptGenerator : public Generator {
- public:
+ protected:
   void after_generate_enum(std::ostream& ostream,
                            const Document* document) override {
     ostream << NL;

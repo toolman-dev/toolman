@@ -18,7 +18,7 @@
 
 namespace toolman {
 class JavaGenerator : public Generator {
- public:
+ protected:
   void before_generate_document(std::ostream &ostream,
                                 const Document *document) override {
     // process option
@@ -31,7 +31,7 @@ class JavaGenerator : public Generator {
     }
 
     auto outclass =
-        capitalize(camelcase(document->get_file()->stem().string()));
+        capitalize(camelcase(document->get_source()->stem().string()));
     ostream << "public final class " << outclass << " {" << NL << INDENT_1
             << "private " << outclass << "() {}" << NL;
   }

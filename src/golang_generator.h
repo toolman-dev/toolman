@@ -16,7 +16,7 @@
 
 namespace toolman {
 class GolangGenerator : public Generator {
- public:
+ protected:
   void before_generate_struct(std::ostream& ostream,
                               const Document* document) override {
     for (const auto& struct_type : document->get_struct_types()) {

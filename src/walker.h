@@ -5,6 +5,7 @@
 #ifndef TOOLMAN_WALKER_H_
 #define TOOLMAN_WALKER_H_
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <stack>
@@ -24,22 +25,23 @@
 
 namespace toolman {
 
-template <typename NODE, typename FILE>
-StmtInfo get_stmt_info(NODE* node, FILE&& file) {
+template <typename NODE, typename SOURCE>
+StmtInfo get_stmt_info(NODE* node, SOURCE&& source) {
   auto id_start_token = node->getStart();
   return StmtInfo(
       {id_start_token->getLine(), node->getStop()->getLine()},
       {id_start_token->getStartIndex(), id_start_token->getStopIndex()},
-      std::forward<FILE>(file));
+      std::forward<SOURCE>(source));
 }
 
 // Declare phase
-class DeclPhaseWalker final : public ToolmanParserBaseListener {
+class DeclPhaseWalker final : public ToolmanParserBaseListener,
+                              public HasMultiError {
  public:
-  explicit DeclPhaseWalker(std::shared_ptr<std::filesystem::path> file)
+  explicit DeclPhaseWalker(std::shared_ptr<std::filesystem::path> source)
       : type_scope_(std::make_shared<TypeScope>()),
         option_scope_(std::make_shared<OptionScope>()),
-        file_(std::move(file)) {
+        source_(std::move(source)) {
     buildin::decl_buildin_option(option_scope_.get());
   }
 
@@ -59,15 +61,13 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
     return option_scope_;
   }
 
-  [[nodiscard]] const std::vector<Error>& get_errors() const { return errors_; }
-
  private:
   template <typename NODE, typename DECL_TYPE>
   void decl_type(NODE* node) {
-    StmtInfo stmt_info = get_stmt_info(node->identifierName(), file_);
+    StmtInfo stmt_info = get_stmt_info(node->identifierName(), source_);
     if (auto search = type_scope_->lookup(node->identifierName()->getText());
         search.has_value()) {
-      errors_.emplace_back(DuplicateTypeDeclError(search.value(), stmt_info));
+      push_error(DuplicateTypeDeclError(search.value(), stmt_info));
       return;
     } else {
       type_scope_->declare(std::make_shared<DECL_TYPE>(
@@ -77,8 +77,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener {
 
   std::shared_ptr<TypeScope> type_scope_;
   std::shared_ptr<OptionScope> option_scope_;
-  std::vector<Error> errors_;
-  std::shared_ptr<std::filesystem::path> file_;
+  std::shared_ptr<std::filesystem::path> source_;
 };
 
 class FieldTypeBuilder {
@@ -164,36 +163,35 @@ class CustomTypeBuilder {
   std::shared_ptr<CustomType<FIELD>> current_custom_type_;
 };
 
-class RefPhaseWalker final : public ToolmanParserBaseListener {
+class RefPhaseWalker final : public ToolmanParserBaseListener,
+                             public HasMultiError {
  public:
   enum class BuildState : char { IN_STRUCT, IN_ONEOF, RECURSIVE_ONFOF };
 
   RefPhaseWalker(std::shared_ptr<TypeScope> type_scope,
                  std::shared_ptr<OptionScope> option_scope,
-                 std::shared_ptr<std::filesystem::path> file)
+                 std::shared_ptr<std::filesystem::path> source)
       : type_scope_(std::move(type_scope)),
         option_scope_(std::move(option_scope)),
-        file_(std::move(file)),
+        source_(std::move(source)),
         enum_builder_(),
         build_state_(BuildState::IN_STRUCT) {}
   std::unique_ptr<Document> get_document() {
     return std::unique_ptr<Document>(document_.release());
   }
 
-  [[nodiscard]] const std::vector<Error>& get_errors() const { return errors_; }
-
   void enterDocument(ToolmanParser::DocumentContext* node) override {
     document_ = std::make_unique<Document>();
-    document_->set_file(file_);
+    document_->set_source(source_);
   }
 
   void enterOptionStatement(
       ToolmanParser::OptionStatementContext* node) override {
     auto search_opt = option_scope_->lookup(node->identifierName()->getText());
     if (!search_opt.has_value()) {
-      errors_.push_back(
+      push_error(
           UnknownOptionError(node->identifierName()->getText(),
-                             get_stmt_info(node->identifierName(), file_)));
+                             get_stmt_info(node->identifierName(), source_)));
     } else {
       auto search = search_opt.value();
       auto option_value_node = node->optionValue();
@@ -214,8 +212,8 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
             std::stod(option_value_node->numericLiteral()->getText()));
         document_->insert_option(numeric_option);
       } else {
-        errors_.emplace_back(OptionTypeMismatchError(
-            search.get(), get_stmt_info(option_value_node, file_)));
+        push_error(OptionTypeMismatchError(
+            search.get(), get_stmt_info(option_value_node, source_)));
       }
     }
   }
@@ -244,7 +242,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
     auto field =
-        Field(node->identifierName()->getText(), get_stmt_info(node, file_));
+        Field(node->identifierName()->getText(), get_stmt_info(node, source_));
     if (build_state_ == BuildState::IN_STRUCT) {
       struct_builder_.start_field(field);
     } else if (build_state_ == BuildState::IN_ONEOF) {
@@ -264,7 +262,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
         oneof_builder_.end_field();
       }
     } catch (DuplicateFieldDeclError& e) {
-      errors_.emplace_back(e);
+      push_error(e);
     }
   }
 
@@ -274,7 +272,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterListType(ToolmanParser::ListTypeContext* node) override {
     field_type_builder_.start_type(
-        std::make_shared<ListType>(ListType(get_stmt_info(node, file_))));
+        std::make_shared<ListType>(ListType(get_stmt_info(node, source_))));
   }
 
   void exitListType(ToolmanParser::ListTypeContext*) override {
@@ -295,9 +293,9 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   void enterMapType(ToolmanParser::MapTypeContext* node) override {
     try {
       field_type_builder_.start_type(
-          std::make_shared<MapType>(MapType(get_stmt_info(node, file_))));
+          std::make_shared<MapType>(MapType(get_stmt_info(node, source_))));
     } catch (MapKeyTypeMustBePrimitiveError& e) {
-      errors_.emplace_back(e);
+      push_error(e);
     }
   }
 
@@ -340,7 +338,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
       type_kind = PrimitiveType::TypeKind::Any;
     }
     field_type_builder_.start_type(std::make_shared<PrimitiveType>(
-        PrimitiveType(type_kind, get_stmt_info(node, file_))));
+        PrimitiveType(type_kind, get_stmt_info(node, source_))));
   }
 
   void exitPrimitiveType(ToolmanParser::PrimitiveTypeContext*) override {
@@ -357,8 +355,8 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
       ToolmanParser::CustomTypeNameContext* node) override {
     auto custom_type = type_scope_->lookup(node->identifierName()->getText());
     if (!custom_type.has_value()) {
-      errors_.emplace_back(CustomTypeNotFoundError(
-          node->identifierName()->getText(), get_stmt_info(node, file_)));
+      push_error(CustomTypeNotFoundError(node->identifierName()->getText(),
+                                         get_stmt_info(node, source_)));
       return;
     }
     field_type_builder_.start_type(custom_type.value());
@@ -397,11 +395,12 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
 
   void enterEnumField(ToolmanParser::EnumFieldContext* node) override {
     auto enum_field = EnumField(node->identifierName()->getText(),
-                                get_stmt_info(node, file_));
+                                get_stmt_info(node, source_));
     auto value = std::stoi(node->intgerLiteral()->getText());
     if (!enum_field.set_value(value)) {
-      errors_.emplace_back(DuplicateEnumFieldValueError(
-          EnumField::get_by_value(value).value(), get_stmt_info(node, file_)));
+      push_error(
+          DuplicateEnumFieldValueError(EnumField::get_by_value(value).value(),
+                                       get_stmt_info(node, source_)));
       return;
     }
     enum_builder_.start_field(enum_field);
@@ -411,19 +410,19 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
     try {
       enum_builder_.end_field();
     } catch (DuplicateFieldDeclError& e) {
-      errors_.emplace_back(e);
+      push_error(e);
     }
   }
 
   void enterOneofType(ToolmanParser::OneofTypeContext* node) override {
     if (build_state_ == BuildState::IN_ONEOF) {
-      errors_.emplace_back(RecursiveOneofTypeError(get_stmt_info(node, file_)));
+      push_error(RecursiveOneofTypeError(get_stmt_info(node, source_)));
       build_state_ = BuildState::RECURSIVE_ONFOF;
       return;
     }
     build_state_ = BuildState::IN_ONEOF;
     oneof_builder_.start_custom_type(
-        std::make_shared<OneofType>(OneofType(get_stmt_info(node, file_))));
+        std::make_shared<OneofType>(OneofType(get_stmt_info(node, source_))));
   }
 
   void exitOneofType(ToolmanParser::OneofTypeContext*) override {
@@ -441,8 +440,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener {
   CustomTypeBuilder<Field> oneof_builder_;
   std::shared_ptr<TypeScope> type_scope_;
   std::shared_ptr<OptionScope> option_scope_;
-  std::shared_ptr<std::filesystem::path> file_;
-  std::vector<Error> errors_;
+  std::shared_ptr<std::filesystem::path> source_;
   BuildState build_state_;
 };
 

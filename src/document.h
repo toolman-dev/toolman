@@ -43,19 +43,19 @@ class Document final {
     options_.emplace_back(std::move(option));
   }
 
-  [[nodiscard]] std::shared_ptr<std::filesystem::path> get_file() const {
-    return file_;
+  [[nodiscard]] std::shared_ptr<std::filesystem::path> get_source() const {
+    return source_;
   }
 
-  void set_file(std::shared_ptr<std::filesystem::path> file) {
-    file_ = std::move(file);
+  void set_source(std::shared_ptr<std::filesystem::path> source) {
+    source_ = std::move(source);
   }
 
  private:
   std::vector<std::shared_ptr<StructType>> struct_types_;
   std::vector<std::shared_ptr<EnumType>> enum_types_;
   std::vector<std::shared_ptr<Option>> options_;
-  std::shared_ptr<std::filesystem::path> file_;
+  std::shared_ptr<std::filesystem::path> source_;
 };
 }  // namespace toolman
 #endif  // TOOLMAN_DOC_H_

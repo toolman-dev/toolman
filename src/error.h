@@ -5,9 +5,11 @@
 #ifndef TOOLMAN_ERROR_H_
 #define TOOLMAN_ERROR_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "enum_field.h"
 #include "src/option.h"
@@ -15,6 +17,7 @@
 #include "src/type.h"
 
 namespace toolman {
+
 class Error {
  public:
   enum class ErrorType : char { Lexer, Syntax, Semantic };
@@ -32,6 +35,27 @@ class Error {
   ErrorType type_;
   Level level_;
   std::string message_;
+};
+
+class HasMultiError {
+ public:
+  HasMultiError() = default;
+  explicit HasMultiError(std::vector<Error> errors)
+      : errors_(std::move(errors)) {}
+
+  [[nodiscard]] bool has_error() const { return !errors_.empty(); }
+
+  [[nodiscard]] bool has_fatal_error() const {
+    return std::any_of(errors_.cbegin(), errors_.cend(),
+                       [](auto err) { return err.is_fatal(); });
+  }
+
+  std::vector<Error> get_errors() { return errors_; }
+
+  void push_error(Error error) { errors_.push_back(std::move(error)); }
+
+ private:
+  std::vector<Error> errors_;
 };
 
 class DuplicateTypeDeclError final : public Error {
