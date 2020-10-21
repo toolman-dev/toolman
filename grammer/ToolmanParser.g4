@@ -9,21 +9,24 @@ options {
 	tokenVocab = ToolmanLexer;
 }
 
-document: (importStatement | optionStatement | decl)* EOF;
+document: importStatement* (optionStatement | decl)* EOF;
 
 // from '/pathxxx.tm' import someType as aliasName, ...
-importStatement: From StringLiteral Import SemiColon;
+importStatement: From StringLiteral Import importList SemiColon;
 
 importList:
-	identifierName (As identifierName)? (
-		Comma identifierName (As identifierName)?
-	)*
-	| Star;
+	importName (As importNameAlias)? (
+		Comma importName (As importNameAlias)?
+	)*      # FromImport
+	| Star  # FromImportStar
+	;
+
+importName: identifierName;
+
+importNameAlias: identifierName;
+
 //
 // Option
-// 
-//
-// 
 //
 
 optionStatement:

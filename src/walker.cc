@@ -4,9 +4,44 @@
 
 #include "src/walker.h"
 
+#include "src/compiler.h"
+
 namespace toolman {
 
-void FieldTypeBuilder::start_type(const std::shared_ptr<Type>& type) {
+void DeclPhaseWalker::enterImportStatement(
+    ToolmanParser::ImportStatementContext *node) {
+  import_builder_.start_import(
+      node->getToken(ToolmanLexer::StringLiteral, 0)->getText());
+}
+
+void DeclPhaseWalker::exitImportStatement(
+    ToolmanParser::ImportStatementContext *) {
+  import_builder_.end_import();
+  for (auto const &regular_import : import().get_regular_imports()) {
+    auto module = compiler()->compile_module(regular_import.first);
+
+  }
+}
+
+void DeclPhaseWalker::enterFromImport(ToolmanParser::FromImportContext *node) {
+  import_builder_.set_import_star(false);
+}
+
+void DeclPhaseWalker::enterFromImportStar(
+    ToolmanParser::FromImportStarContext *) {
+  import_builder_.set_import_star(true);
+}
+
+void DeclPhaseWalker::enterImportName(ToolmanParser::ImportNameContext *node) {
+  import_builder_.start_import_name(node->identifierName()->getText());
+}
+
+void DeclPhaseWalker::enterImportNameAlias(
+    ToolmanParser::ImportNameAliasContext *node) {
+  import_builder_.start_import_name_alias(node->identifierName()->getText());
+}
+
+void FieldTypeBuilder::start_type(const std::shared_ptr<Type> &type) {
   if (!type_stack_.empty()) {
     if (type_stack_.top()->is_list()) {
       if (TypeLocation::ListElement == current_type_location_) {

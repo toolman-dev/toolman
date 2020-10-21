@@ -43,10 +43,11 @@ class Module : public HasMultiError {
         option_scope_(std::move(option_scope)),
         source_(std::move(source)),
         HasMultiError(std::move(errors)) {}
-  std::shared_ptr<TypeScope> get_type_scope() { return type_scope_; }
 
-  std::shared_ptr<OptionScope> get_option_scope() { return option_scope_; }
-  std::shared_ptr<std::filesystem::path> get_source() { return source_; }
+  std::shared_ptr<TypeScope> type_scope() { return type_scope_; }
+
+  std::shared_ptr<OptionScope> option_scope() { return option_scope_; }
+  std::shared_ptr<std::filesystem::path> source() { return source_; }
 
  private:
   std::shared_ptr<TypeScope> type_scope_;
@@ -71,31 +72,25 @@ class Compiler {
  public:
   Compiler() : walker_(antlr4::tree::ParseTreeWalker::DEFAULT) {}
 
-  void compile_module(const std::string &src_path) {
+  std::unique_ptr<Module> compile_module(const std::string &src_path) {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
-    if (auto it = modules_.find(*source_ptr); it != modules_.end()) {
-      return;
-    }
     DEF_PHASE_WALK(source_ptr, this);
     walker_.walk(&def_phase_walker, tree);
-
-    modules_.emplace(
-        *source_ptr,
-        std::make_unique<Module>(def_phase_walker.get_type_scope(),
-                                 def_phase_walker.get_option_scope(),
-                                 source_ptr, def_phase_walker.get_errors()));
+    return std::make_unique<Module>(def_phase_walker.type_scope(),
+                                    def_phase_walker.option_scope(), source_ptr,
+                                    def_phase_walker.get_errors());
   }
 
-  CompileResult compile(const std::string &src_path) {
+  CompileResult compile(std::filesystem::path ) {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
 
     DEF_PHASE_WALK(source_ptr, this);
 
     auto ref_phase_walker =
-        RefPhaseWalker(def_phase_walker.get_type_scope(),
-                       def_phase_walker.get_option_scope(), source_ptr);
+        RefPhaseWalker(def_phase_walker.type_scope(),
+                       def_phase_walker.option_scope(), source_ptr);
 
     walker_.walk(&ref_phase_walker, tree);
 

@@ -19,6 +19,7 @@
 #include "src/document.h"
 #include "src/error.h"
 #include "src/field.h"
+#include "src/import.h"
 #include "src/list_type.h"
 #include "src/map_type.h"
 #include "src/scope.h"
@@ -36,6 +37,45 @@ StmtInfo get_stmt_info(NODE* node, SOURCE&& source) {
       std::forward<SOURCE>(source));
 }
 
+class ImportBuilder {
+ public:
+  void start_import(std::string filename) {
+    current_filename_ = std::move(filename);
+  }
+
+  void end_import() {
+    if (is_star_) {
+      import_.add_import_star(current_filename_);
+    } else {
+      import_.add_import(current_filename_, std::move(current_import_names_));
+    }
+    current_import_names_.clear();
+  }
+
+  void start_import_name(std::string import_name) {
+    if (current_import_name_.has_value()) {
+      current_import_names_.push_back(current_import_name_.value());
+    }
+    current_import_name_ = std::make_optional<ImportName>(
+        ImportName{std::move(import_name), std::nullopt});
+  }
+
+  void start_import_name_alias(std::string alias_name) {
+    current_import_name_.value().original_name = std::move(alias_name);
+  }
+
+  Import import() { return std::move(import_); }
+
+  void set_import_star(bool is_star) { is_star_ = is_star; }
+
+ private:
+  std::string current_filename_;
+  std::vector<ImportName> current_import_names_;
+  std::optional<ImportName> current_import_name_;
+  bool is_star_ = false;
+  Import import_;
+};
+
 // Declare phase
 class DeclPhaseWalker final : public ToolmanParserBaseListener,
                               public HasMultiError {
@@ -49,6 +89,20 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener,
     buildin::decl_buildin_option(option_scope_.get());
   }
 
+  void enterImportStatement(
+      ToolmanParser::ImportStatementContext* node) override;
+
+  void exitImportStatement(ToolmanParser::ImportStatementContext*) override;
+
+  void enterFromImport(ToolmanParser::FromImportContext* node) override;
+
+  void enterFromImportStar(ToolmanParser::FromImportStarContext*) override;
+
+  void enterImportName(ToolmanParser::ImportNameContext* node) override;
+
+  void enterImportNameAlias(
+      ToolmanParser::ImportNameAliasContext* node) override;
+
   void enterStructDecl(ToolmanParser::StructDeclContext* node) override {
     decl_type<ToolmanParser::StructDeclContext, StructType>(node);
   }
@@ -57,13 +111,15 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener,
     decl_type<ToolmanParser::EnumDeclContext, EnumType>(node);
   }
 
-  [[nodiscard]] const std::shared_ptr<TypeScope>& get_type_scope() const {
+  [[nodiscard]] const std::shared_ptr<TypeScope>& type_scope() const {
     return type_scope_;
   }
 
-  [[nodiscard]] const std::shared_ptr<OptionScope>& get_option_scope() const {
+  [[nodiscard]] const std::shared_ptr<OptionScope>& option_scope() const {
     return option_scope_;
   }
+
+  [[nodiscard]] Compiler* compiler() const { return compiler_; }
 
  private:
   template <typename NODE, typename DECL_TYPE>
@@ -79,9 +135,12 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener,
     }
   }
 
+  Import import() { return import_builder_.import(); }
+
   std::shared_ptr<TypeScope> type_scope_;
   std::shared_ptr<OptionScope> option_scope_;
   std::shared_ptr<std::filesystem::path> source_;
+  ImportBuilder import_builder_;
   Compiler* compiler_;
 };
 
