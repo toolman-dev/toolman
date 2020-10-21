@@ -26,6 +26,7 @@ namespace toolman {
 
 class Generator {
  public:
+  virtual ~Generator() = default;
   void generate(std::ostream& ostream,
                 const std::unique_ptr<Document>& document) {
     ostream << single_line_comment(

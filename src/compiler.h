@@ -7,9 +7,11 @@
 
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -22,31 +24,34 @@
 #include "src/typescript_generator.h"
 #include "src/walker.h"
 
+#define CREATE_PARSER(source)                             \
+  auto ifs = std::ifstream(*(source), std::ios_base::in); \
+  antlr4::ANTLRInputStream input(ifs);                    \
+  ToolmanLexer lexer(&input);                             \
+  antlr4::CommonTokenStream tokens(&lexer);               \
+  tokens.fill();                                          \
+  ToolmanParser parser(&tokens);
+
 namespace toolman {
 
 class Module : public HasMultiError {
  public:
   Module(std::shared_ptr<TypeScope> type_scope,
          std::shared_ptr<OptionScope> option_scope,
-         antlr4::tree::ParseTree *parse_tree,
          std::shared_ptr<std::filesystem::path> source,
          std::vector<Error> errors)
-      : type_scope_(type_scope),
-        option_scope_(option_scope),
-        parse_tree_(parse_tree),
-        source_(source),
+      : type_scope_(std::move(type_scope)),
+        option_scope_(std::move(option_scope)),
+        source_(std::move(source)),
         HasMultiError(std::move(errors)) {}
-
   std::shared_ptr<TypeScope> get_type_scope() { return type_scope_; }
 
   std::shared_ptr<OptionScope> get_option_scope() { return option_scope_; }
-  antlr4::tree::ParseTree *get_parse_tree() { return parse_tree_; }
   std::shared_ptr<std::filesystem::path> get_source() { return source_; }
 
  private:
   std::shared_ptr<TypeScope> type_scope_;
   std::shared_ptr<OptionScope> option_scope_;
-  antlr4::tree::ParseTree *parse_tree_;
   std::shared_ptr<std::filesystem::path> source_;
 };
 
@@ -65,19 +70,48 @@ class CompileResult final : public HasMultiError {
 
 class Compiler {
  public:
+  Compiler() : walker_(antlr4::tree::ParseTreeWalker::DEFAULT) {}
+
   enum class TargetLanguage : char { GOLANG, TYPESCRIPT, JAVA };
 
-  static CompileResult compile(const std::string& src_path) {
-    auto module = compile_module(src_path);
+  void compile_module(const std::string &src_path) {
+    auto source_ptr = std::make_shared<std::filesystem::path>(
+        std::filesystem::absolute(src_path).lexically_normal());
+    if (auto it = modules_.find(*source_ptr); it != modules_.end()) {
+      return;
+    }
+    CREATE_PARSER(source_ptr);
+
+    antlr4::tree::ParseTree *tree = parser.document();
+
+    auto def_phase_walker = toolman::DeclPhaseWalker(source_ptr);
+
+    walker_.walk(&def_phase_walker, tree);
+
+    modules_.emplace(*source_ptr, std::make_unique<Module>(
+                                 def_phase_walker.get_type_scope(),
+                                 def_phase_walker.get_option_scope(),
+                                 source_ptr, def_phase_walker.get_errors()));
+  }
+
+  CompileResult compile(const std::string &src_path) {
+    auto source_ptr = std::make_shared<std::filesystem::path>(
+        std::filesystem::absolute(src_path).lexically_normal());
+
+    CREATE_PARSER(source_ptr);
+    antlr4::tree::ParseTree *tree = parser.document();
+
+    auto def_phase_walker = toolman::DeclPhaseWalker(source_ptr);
+
+    walker_.walk(&def_phase_walker, tree);
 
     auto ref_phase_walker =
-        RefPhaseWalker(module->get_type_scope(), module->get_option_scope(),
-                       module->get_source());
+        RefPhaseWalker(def_phase_walker.get_type_scope(),
+                       def_phase_walker.get_option_scope(), source_ptr);
 
-    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&ref_phase_walker,
-                                                module->get_parse_tree());
+    walker_.walk(&ref_phase_walker, tree);
 
-    auto errors = module->get_errors();
+    auto errors = def_phase_walker.get_errors();
     auto ref_phase_errors = ref_phase_walker.get_errors();
     errors.insert(errors.end(), ref_phase_errors.begin(),
                   ref_phase_errors.end());
@@ -85,7 +119,7 @@ class Compiler {
   }
 
   static void generate(std::unique_ptr<Document> document,
-                TargetLanguage targetLanguage, std::ostream &ostream) {
+                       TargetLanguage targetLanguage, std::ostream &ostream) {
     std::unique_ptr<Generator> generator;
     switch (targetLanguage) {
       case TargetLanguage::GOLANG:
@@ -102,31 +136,8 @@ class Compiler {
   }
 
  private:
-  static std::unique_ptr<Module> compile_module(const std::string& src_path) {
-    std::unique_ptr<std::istream> istream;
-    std::shared_ptr<std::filesystem::path> source =
-        std::make_shared<std::filesystem::path>(src_path);
-
-    auto ifs = std::make_unique<std::ifstream>(
-        std::ifstream(*source, std::ios_base::in));
-
-    antlr4::ANTLRInputStream input(*istream);
-    ToolmanLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-
-    tokens.fill();
-
-    ToolmanParser parser(&tokens);
-
-    antlr4::tree::ParseTree *tree = parser.document();
-
-    auto def_phase_walker = toolman::DeclPhaseWalker(source);
-    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&def_phase_walker, tree);
-
-    return std::make_unique<Module>(def_phase_walker.get_type_scope(),
-                                    def_phase_walker.get_option_scope(), tree,
-                                    source, def_phase_walker.get_errors());
-  }
+  antlr4::tree::ParseTreeWalker walker_;
+  std::map<std::filesystem::path, std::unique_ptr<Module>> modules_;
 };
 }  // namespace toolman
 
