@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <optional>
 
 #include "src/stmt_info.h"
 #include "src/type.h"
