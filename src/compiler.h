@@ -18,10 +18,6 @@
 #include "ToolmanLexer.h"
 #include "ToolmanParser.h"
 #include "src/error.h"
-#include "src/generator.h"
-#include "src/golang_generator.h"
-#include "src/java_generator.h"
-#include "src/typescript_generator.h"
 #include "src/walker.h"
 
 namespace toolman {
@@ -75,8 +71,6 @@ class Compiler {
  public:
   Compiler() : walker_(antlr4::tree::ParseTreeWalker::DEFAULT) {}
 
-  enum class TargetLanguage : char { GOLANG, TYPESCRIPT, JAVA };
-
   void compile_module(const std::string &src_path) {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
@@ -110,23 +104,6 @@ class Compiler {
     errors.insert(errors.end(), ref_phase_errors.begin(),
                   ref_phase_errors.end());
     return CompileResult(ref_phase_walker.get_document(), errors);
-  }
-
-  static void generate(std::unique_ptr<Document> document,
-                       TargetLanguage targetLanguage, std::ostream &ostream) {
-    std::unique_ptr<Generator> generator;
-    switch (targetLanguage) {
-      case TargetLanguage::GOLANG:
-        generator = std::make_unique<GolangGenerator>();
-        break;
-      case TargetLanguage::TYPESCRIPT:
-        generator = std::make_unique<TypescriptGenerator>();
-        break;
-      case TargetLanguage::JAVA:
-        generator = std::make_unique<JavaGenerator>();
-        break;
-    }
-    generator->generate(ostream, document);
   }
 
  private:

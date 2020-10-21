@@ -6,6 +6,7 @@
 #define TOOLMAN_GENERATOR_H_
 
 #include <memory>
+#include <sstream>
 
 #include "src/custom_type.h"
 #include "src/document.h"
@@ -22,7 +23,11 @@
 #define NL3 NL2 NL1
 #define NL4 NL3 NL1
 
-namespace toolman {
+namespace toolman::generator {
+
+enum class TargetLanguage : char { GOLANG, TYPESCRIPT, JAVA };
+void generate(std::unique_ptr<Document> document, TargetLanguage targetLanguage,
+              std::ostream& ostream);
 
 class Generator {
  public:
@@ -83,16 +88,7 @@ class Generator {
  *      name       -> name
  *      Name       -> name
  */
-std::string underscore(std::string in) {
-  in[0] = tolower(in[0]);
-  for (size_t i = 1; i < in.size(); ++i) {
-    if (isupper(in[i])) {
-      in[i] = tolower(in[i]);
-      in.insert(i, "_");
-    }
-  }
-  return in;
-}
+std::string underscore(std::string in);
 
 /**
  * Transforms a string with words separated by underscores to a camel case
@@ -102,39 +98,15 @@ std::string underscore(std::string in) {
  * some_name    -> someName
  * name         -> name
  */
-std::string camelcase(const std::string& in) {
-  std::ostringstream out;
-  bool underscore = false;
-
-  for (char c : in) {
-    if (c == '_') {
-      underscore = true;
-      continue;
-    }
-    if (underscore) {
-      out << (char)toupper(c);
-      underscore = false;
-      continue;
-    }
-    out << c;
-  }
-
-  return out.str();
-}
+std::string camelcase(const std::string& in);
 
 /**
  * Capitalization helpers
  */
-std::string capitalize(std::string in) {
-  in[0] = toupper(in[0]);
-  return in;
-}
+std::string capitalize(std::string in);
 
-std::string decapitalize(std::string in) {
-  in[0] = tolower(in[0]);
-  return in;
-}
+std::string decapitalize(std::string in);
 
-}  // namespace toolman
+}  // namespace toolman::generator
 
 #endif  // TOOLMAN_GENERATOR_H_

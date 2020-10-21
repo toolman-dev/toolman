@@ -5,7 +5,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "src/compiler.h"
+#include "src/generator.h"
 
 int main(int, char **) {
   std::string filename = "/Users/ty/Desktop/toolman_examples.tm";
@@ -20,9 +22,9 @@ int main(int, char **) {
     return 1;
   }
 
-  toolman::Compiler::generate(compile_res.get_document(),
-                              toolman::Compiler::TargetLanguage::JAVA,
-                              std::cout);
+  toolman::generator::generate(compile_res.get_document(),
+                               toolman::generator::TargetLanguage::JAVA,
+                               std::cout);
 
   return 0;
 }

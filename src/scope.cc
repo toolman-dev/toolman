@@ -6,9 +6,7 @@
 
 #include <utility>
 
-namespace toolman {
-
-namespace buildin {
+namespace toolman::buildin {
 void decl_buildin_option(OptionScope* option_scope) {
   option_scope->declare(
       std::make_shared<
@@ -18,5 +16,4 @@ void decl_buildin_option(OptionScope* option_scope) {
       std::make_shared<std::remove_const_t<decltype(option_java_package)>>(
           option_java_package));
 }
-}  // namespace buildin
-}  // namespace toolman
+}  // namespace toolman::buildin

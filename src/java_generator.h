@@ -16,7 +16,7 @@
 #include "src/primitive_type.h"
 #include "src/scope.h"
 
-namespace toolman {
+namespace toolman::generator {
 class JavaGenerator : public Generator {
  protected:
   void before_generate_document(std::ostream &ostream,
@@ -201,5 +201,5 @@ class JavaGenerator : public Generator {
   }
   bool use_java8_optional_ = false;
 };
-}  // namespace toolman
+}  // namespace toolman::generator
 #endif  // TOOLMAN_GOLANG_GENERATOR_H_

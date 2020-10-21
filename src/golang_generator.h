@@ -14,7 +14,7 @@
 #include "src/map_type.h"
 #include "src/primitive_type.h"
 
-namespace toolman {
+namespace toolman::generator {
 class GolangGenerator : public Generator {
  protected:
   void before_generate_struct(std::ostream& ostream,
@@ -146,6 +146,6 @@ class GolangGenerator : public Generator {
     return "";
   }
 };
-}  // namespace toolman
+}  // namespace toolman::generator
 
 #endif  // TOOLMAN_GOLANG_GENERATOR_H_

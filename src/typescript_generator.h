@@ -16,7 +16,7 @@
 #include "src/primitive_type.h"
 #include "src/type.h"
 
-namespace toolman {
+namespace toolman::generator {
 class TypescriptGenerator : public Generator {
  protected:
   void after_generate_enum(std::ostream& ostream,
@@ -101,6 +101,6 @@ class TypescriptGenerator : public Generator {
     return "";
   }
 };
-}  //  namespace toolman
+}  // namespace toolman::generator
 
 #endif  // TOOLMAN_TYPESCRIPT_GENERATOR_H_
