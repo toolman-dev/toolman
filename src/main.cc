@@ -2,59 +2,29 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-#include <fstream>
 #include <iostream>
-#include <vector>
+#include <memory>
+#include <string>
 
-#include "ToolmanLexer.h"
-#include "ToolmanParser.h"
-#include "ToolmanParserBaseListener.h"
-#include "src/error.h"
-#include "src/golang_generator.h"
-#include "src/scope.h"
-#include "src/walker.h"
-
-using toolman::DeclPhaseWalker;
-using toolman::RefPhaseWalker;
-using toolman::ToolmanLexer;
-using toolman::ToolmanParser;
+#include "src/compiler.h"
+#include "src/generator.h"
 
 int main(int, char **) {
   std::string filename = "/Users/ty/Desktop/toolman_examples.tm";
-  std::ifstream tm_file(filename);
-  if (tm_file.is_open()) {
-    antlr4::ANTLRInputStream input(tm_file);
-    ToolmanLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
+  toolman::Compiler compiler;
+  auto compile_res = compiler.compile(filename);
 
-    tokens.fill();
-
-    ToolmanParser parser(&tokens);
-    antlr4::tree::ParseTree *tree = parser.document();
-
-    antlr4::tree::ParseTreeWalker walker;
-    auto def_phase_walker =
-        DeclPhaseWalker(std::make_shared<std::string>(filename));
-
-    walker.walk(&def_phase_walker, tree);
-
-    for (const auto &error : def_phase_walker.get_errors()) {
-      std::cout << error.error() << std::endl << std::endl;
-    }
-
-    auto ref_phase_walker =
-        RefPhaseWalker(def_phase_walker.get_type_scope(),
-                       std::make_shared<std::string>(filename));
-
-    walker.walk(&ref_phase_walker, tree);
-    for (const auto &error : ref_phase_walker.get_errors()) {
-      std::cout << error.error() << std::endl << std::endl;
-    }
-
-    // std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
-    toolman::GolangGenerator gg;
-
-    gg.generate(std::cout, ref_phase_walker.get_document());
+  for (const auto &error : compile_res.get_errors()) {
+    std::cout << error.error() << std::endl << std::endl;
   }
+
+  if (compile_res.has_fatal_error()) {
+    return 1;
+  }
+
+  toolman::generator::generate(compile_res.get_document(),
+                               toolman::generator::TargetLanguage::JAVA,
+                               std::cout);
+
   return 0;
 }

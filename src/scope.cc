@@ -4,25 +4,16 @@
 
 #include "src/scope.h"
 
-#include <memory>
-#include <optional>
 #include <utility>
 
-#include "src/type.h"
-
-namespace toolman {
-
-std::optional<std::shared_ptr<Type>> Scope::lookup_type(
-    const std::string &name) {
-  if (const auto it = types_.find(name); types_.end() != it) {
-    return {it->second};
-  }
-  return std::nullopt;
+namespace toolman::buildin {
+void decl_buildin_option(OptionScope* option_scope) {
+  option_scope->declare(
+      std::make_shared<
+          std::remove_const_t<decltype(option_use_java8_optional)>>(
+          option_use_java8_optional));
+  option_scope->declare(
+      std::make_shared<std::remove_const_t<decltype(option_java_package)>>(
+          option_java_package));
 }
-
-bool Scope::declare(std::shared_ptr<Type> type) {
-  auto res = types_.emplace(type->get_name(), std::move(type));
-  return res.second;
-}
-
-}  // namespace toolman
+}  // namespace toolman::buildin

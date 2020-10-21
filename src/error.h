@@ -5,14 +5,19 @@
 #ifndef TOOLMAN_ERROR_H_
 #define TOOLMAN_ERROR_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
+#include "enum_field.h"
+#include "src/option.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
 namespace toolman {
+
 class Error {
  public:
   enum class ErrorType : char { Lexer, Syntax, Semantic };
@@ -22,6 +27,8 @@ class Error {
   Error(ErrorType type, Level level, S&& message)
       : type_(type), level_(level), message_(std::forward<S>(message)) {}
 
+  [[nodiscard]] bool is_fatal() const { return level_ == Level::Fatal; }
+
   [[nodiscard]] virtual std::string error() const { return message_; }
 
  protected:
@@ -30,10 +37,31 @@ class Error {
   std::string message_;
 };
 
-class TypeDuplicateDeclError final : public Error {
+class HasMultiError {
+ public:
+  HasMultiError() = default;
+  explicit HasMultiError(std::vector<Error> errors)
+      : errors_(std::move(errors)) {}
+
+  [[nodiscard]] bool has_error() const { return !errors_.empty(); }
+
+  [[nodiscard]] bool has_fatal_error() const {
+    return std::any_of(errors_.cbegin(), errors_.cend(),
+                       [](auto err) { return err.is_fatal(); });
+  }
+
+  std::vector<Error> get_errors() { return errors_; }
+
+  void push_error(Error error) { errors_.push_back(std::move(error)); }
+
+ private:
+  std::vector<Error> errors_;
+};
+
+class DuplicateTypeDeclError final : public Error {
  public:
   template <typename SI>
-  TypeDuplicateDeclError(std::shared_ptr<Type> first_declared_type,
+  DuplicateTypeDeclError(std::shared_ptr<Type> first_declared_type,
                          SI&& duplicate_decl_stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "A type " + first_declared_type->to_string() +
@@ -66,13 +94,51 @@ class CustomTypeNotFoundError final : public Error {
               "cannot find type `" + type_name + "`") {}
 };
 
-class FieldDuplicateDeclError final : public Error {
+class DuplicateFieldDeclError final : public Error {
  public:
   template <typename FIELD, typename SI>
-  FieldDuplicateDeclError(FIELD first_decl_field, SI&& stmt_info)
+  DuplicateFieldDeclError(FIELD first_decl_field, SI&& stmt_info)
       : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
               "field `" + first_decl_field.get_name() +
                   "` is already declared") {}
+};
+
+class DuplicateEnumFieldValueError final : public Error {
+ public:
+  template <typename SI>
+  DuplicateEnumFieldValueError(const EnumField& first_value_field,
+                               SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "discriminant value `" +
+                  std::to_string(first_value_field.get_value()) +
+                  "` already exists") {}
+};
+
+class RecursiveOneofTypeError final : public Error {
+ public:
+  template <typename SI>
+  explicit RecursiveOneofTypeError(SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "oneof type does not allow recursion") {}
+};
+
+class UnknownOptionError final : public Error {
+ public:
+  template <typename SI>
+  explicit UnknownOptionError(const std::string& option_name,
+                              SI&& option_name_stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "Option \"" + option_name + "\" unknown.") {}
+};
+
+class OptionTypeMismatchError final : public Error {
+ public:
+  template <typename SI>
+  OptionTypeMismatchError(Option* option, SI&& option_value_stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "Value must be " + option->type_name() + " for " +
+                  option->type_name() + " option \"" + option->get_name() +
+                  "\".") {}
 };
 
 }  // namespace toolman

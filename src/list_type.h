@@ -16,7 +16,8 @@ namespace toolman {
 class ListType final : public Type {
  public:
   template <typename SI>
-  ListType(SI&& stmt_info) : Type("list", std::forward<SI>(stmt_info)) {}
+  explicit ListType(SI&& stmt_info)
+      : Type("list", std::forward<SI>(stmt_info)) {}
 
   template <typename SI>
   ListType(std::shared_ptr<Type> elem_type, SI&& stmt_info)

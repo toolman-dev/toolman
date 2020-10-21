@@ -1,8 +1,7 @@
 /**
  * A Toolman lexer grammar for ANTLR v4.
  * 
- * @author taoyu
- * @author taowei
+ * @author taoyu @author taowei
  */
 lexer grammar ToolmanLexer;
 
@@ -28,11 +27,20 @@ Colon: ':';
 Doublecolon: '::';
 Ellipsis: '...';
 Or: '|';
+Star: '*';
 
+/// Boolean Literals
+
+BooleanLiteral: 'true' | 'false';
 
 /// Numeric Literals
 
 DecIntegerLiteral: DecimalIntegerLiteral;
+
+DecimalLiteral:
+	DecimalIntegerLiteral '.' [0-9]* ExponentPart?
+	| '.' [0-9]+ ExponentPart?
+	| DecimalIntegerLiteral ExponentPart?;
 
 HexIntegerLiteral: '0' [xX] HexDigit+;
 OctalIntegerLiteral: '0' [oO] [0-7]+;
@@ -41,7 +49,6 @@ BinaryIntegerLiteral: '0' [bB] [01]+;
 /// Keywords
 Struct: 'struct';
 Enum: 'enum';
-Pub: 'pub';
 Import: 'import';
 As: 'as';
 From: 'from';
@@ -55,6 +62,7 @@ I64: 'i64';
 U32: 'u32';
 U64: 'u64';
 Float: 'float';
+Option: 'option';
 
 /// HTTP methods
 Get: [Gg] 'et' | 'GET';
@@ -117,6 +125,7 @@ fragment NonEscapeCharacter: ~['"\\bfnrtv0-9xu\r\n];
 fragment EscapeCharacter: SingleEscapeCharacter | [0-9] | [xu];
 fragment LineContinuation: '\\' [\r\n\u2028\u2029];
 fragment HexDigit: [0-9a-fA-F];
+fragment ExponentPart: [eE] [+-]? [0-9]+;
 fragment DecimalIntegerLiteral: '0' | [1-9] [0-9]*;
 fragment IdentifierPart:
 	IdentifierStart

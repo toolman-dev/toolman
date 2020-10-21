@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include "src/stmt_info.h"
@@ -16,18 +17,32 @@ namespace toolman {
 class EnumField final : public HasStmtInfo {
  public:
   template <typename S, typename SI>
-  EnumField(S&& name, int value, SI&& stmt_info)
+  EnumField(S&& name, SI&& stmt_info)
       : name_(std::forward<S>(name)),
-        value_(value),
         HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
 
   [[nodiscard]] int get_value() const { return value_; }
 
+  // set value to enum field, return false when value already exists.
+  bool set_value(int value) {
+    value_ = value;
+    return value_mapping_.emplace(value, *this).second;
+  }
+
+  static std::optional<EnumField> get_by_value(int value) {
+    if (auto got = value_mapping_.find(value); got != value_mapping_.end()) {
+      return std::make_optional(got->second);
+    } else {
+      return std::nullopt;
+    }
+  }
+
  private:
   std::string name_;
   int value_;
+  inline static std::unordered_map<int, EnumField> value_mapping_;
 };
 }  // namespace toolman
 
