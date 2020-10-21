@@ -8,7 +8,13 @@
 
 set (MAVEN_ROOT /usr/bin CACHE STRING "maven directory")
 
-find_program(Maven_EXECUTABLE NAMES mvn
+if(WIN32)
+    set(MAVEN_NAME "mvn.cmd")
+else()
+    set(MAVEN_NAME mvn)
+endif()
+
+find_program(Maven_EXECUTABLE NAMES ${MAVEN_NAME}
         HINTS ENV${MAVEN_ROOT}/mvn ${MAVEN_ROOT}/mvn)
 
 # handle the QUIETLY and REQUIRED arguments and set Maven_FOUND to TRUE if
