@@ -25,6 +25,8 @@
 
 namespace toolman {
 
+class Compiler;
+
 template <typename NODE, typename SOURCE>
 StmtInfo get_stmt_info(NODE* node, SOURCE&& source) {
   auto id_start_token = node->getStart();
@@ -38,10 +40,12 @@ StmtInfo get_stmt_info(NODE* node, SOURCE&& source) {
 class DeclPhaseWalker final : public ToolmanParserBaseListener,
                               public HasMultiError {
  public:
-  explicit DeclPhaseWalker(std::shared_ptr<std::filesystem::path> source)
+  DeclPhaseWalker(std::shared_ptr<std::filesystem::path> source,
+                  Compiler* compiler)
       : type_scope_(std::make_shared<TypeScope>()),
         option_scope_(std::make_shared<OptionScope>()),
-        source_(std::move(source)) {
+        source_(std::move(source)),
+        compiler_(compiler) {
     buildin::decl_buildin_option(option_scope_.get());
   }
 
@@ -78,6 +82,7 @@ class DeclPhaseWalker final : public ToolmanParserBaseListener,
   std::shared_ptr<TypeScope> type_scope_;
   std::shared_ptr<OptionScope> option_scope_;
   std::shared_ptr<std::filesystem::path> source_;
+  Compiler* compiler_;
 };
 
 class FieldTypeBuilder {

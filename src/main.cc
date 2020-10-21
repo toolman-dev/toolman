@@ -2,12 +2,9 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-#include <filesystem>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
-
 #include "src/compiler.h"
 
 int main(int, char **) {

@@ -24,15 +24,18 @@
 #include "src/typescript_generator.h"
 #include "src/walker.h"
 
-#define CREATE_PARSER(source)                             \
-  auto ifs = std::ifstream(*(source), std::ios_base::in); \
-  antlr4::ANTLRInputStream input(ifs);                    \
-  ToolmanLexer lexer(&input);                             \
-  antlr4::CommonTokenStream tokens(&lexer);               \
-  tokens.fill();                                          \
-  ToolmanParser parser(&tokens);
-
 namespace toolman {
+
+#define DEF_PHASE_WALK(source, compiler)                     \
+  auto ifs = std::ifstream(*(source), std::ios_base::in);    \
+  antlr4::ANTLRInputStream input(ifs);                       \
+  ToolmanLexer lexer(&input);                                \
+  antlr4::CommonTokenStream tokens(&lexer);                  \
+  tokens.fill();                                             \
+  ToolmanParser parser(&tokens);                             \
+  antlr4::tree::ParseTree *tree = parser.document();         \
+  auto def_phase_walker = DeclPhaseWalker(source, compiler); \
+  walker_.walk(&def_phase_walker, tree);
 
 class Module : public HasMultiError {
  public:
@@ -80,16 +83,12 @@ class Compiler {
     if (auto it = modules_.find(*source_ptr); it != modules_.end()) {
       return;
     }
-    CREATE_PARSER(source_ptr);
-
-    antlr4::tree::ParseTree *tree = parser.document();
-
-    auto def_phase_walker = toolman::DeclPhaseWalker(source_ptr);
-
+    DEF_PHASE_WALK(source_ptr, this);
     walker_.walk(&def_phase_walker, tree);
 
-    modules_.emplace(*source_ptr, std::make_unique<Module>(
-                                 def_phase_walker.get_type_scope(),
+    modules_.emplace(
+        *source_ptr,
+        std::make_unique<Module>(def_phase_walker.get_type_scope(),
                                  def_phase_walker.get_option_scope(),
                                  source_ptr, def_phase_walker.get_errors()));
   }
@@ -98,12 +97,7 @@ class Compiler {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
 
-    CREATE_PARSER(source_ptr);
-    antlr4::tree::ParseTree *tree = parser.document();
-
-    auto def_phase_walker = toolman::DeclPhaseWalker(source_ptr);
-
-    walker_.walk(&def_phase_walker, tree);
+    DEF_PHASE_WALK(source_ptr, this);
 
     auto ref_phase_walker =
         RefPhaseWalker(def_phase_walker.get_type_scope(),
