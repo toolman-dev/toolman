@@ -32,7 +32,7 @@ if(NOT EXISTS ${ANTLR4_OUTPUTS_DIR}/ToolmanParser.h)
     if(NOT ANTLR_MVN_RESULT EQUAL 0)
         message(
             FATAL_ERROR
-            "antlr4 generate code failed with the output '${ANTLR_MVN_ERROR}'")
+            "antlr4 generate code failed with the output '${ANTLR_MVN_RESULT}'")
     endif()
 
 endif()
