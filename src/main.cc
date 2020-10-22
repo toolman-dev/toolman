@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -11,6 +12,7 @@
 
 int main(int, char **) {
   std::string filename = "/Users/ty/Desktop/toolman_examples.tm";
+
   toolman::Compiler compiler;
   auto compile_res = compiler.compile(filename);
 

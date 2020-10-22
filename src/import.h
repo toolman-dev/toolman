@@ -5,12 +5,12 @@
 #ifndef TOOLMAN_IMPORT_H_
 #define TOOLMAN_IMPORT_H_
 
+#include <filesystem>
 #include <map>
 #include <optional>
 #include <set>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 namespace toolman {
 
@@ -36,7 +36,8 @@ class Import {
   // from 'xxx.tm' import x as y
   void add_import(const std::string& filename,
                   std::vector<ImportName> import_names) {
-      auto normal_filename = std::filesystem::absolute(filename).lexically_normal();
+    auto normal_filename =
+        std::filesystem::absolute(filename).lexically_normal();
     if (auto import_name_set = regular_imports_.find(normal_filename);
         import_name_set != regular_imports_.end()) {
       import_name_set->second.insert(
@@ -45,7 +46,7 @@ class Import {
     } else {
       // filename not found
       regular_imports_.emplace(
-              normal_filename,
+          normal_filename,
           std::set<ImportName>(std::make_move_iterator(import_names.begin()),
                                std::make_move_iterator(import_names.end())));
     }
@@ -53,8 +54,9 @@ class Import {
 
   // from 'xxx.tm' import *
   void add_import_star(const std::string& filename) {
-      auto normal_filename = std::filesystem::absolute(filename).lexically_normal();
-      namespaces_imports_.emplace(normal_filename);
+    auto normal_filename =
+        std::filesystem::absolute(filename).lexically_normal();
+    namespaces_imports_.emplace(normal_filename);
   }
 
   [[nodiscard]] std::map<std::filesystem::path, std::set<ImportName>>

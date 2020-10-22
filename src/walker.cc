@@ -4,22 +4,64 @@
 
 #include "src/walker.h"
 
+#include <algorithm>
+
 #include "src/compiler.h"
 
 namespace toolman {
 
 void DeclPhaseWalker::enterImportStatement(
     ToolmanParser::ImportStatementContext *node) {
-  import_builder_.start_import(
-      node->getToken(ToolmanLexer::StringLiteral, 0)->getText());
+  auto str_lit = node->getToken(ToolmanLexer::StringLiteral, 0)->getText();
+  import_builder_.start_import(str_lit.substr(1, str_lit.length() - 2));
 }
 
 void DeclPhaseWalker::exitImportStatement(
-    ToolmanParser::ImportStatementContext *) {
+    ToolmanParser::ImportStatementContext *node) {
   import_builder_.end_import();
-  for (auto const &regular_import : import().get_regular_imports()) {
-    auto module = compiler()->compile_module(regular_import.first);
 
+  // import regular imports.
+  for (auto const &[filepath, import_names] : import().get_regular_imports()) {
+    std::shared_ptr<Module> module;
+    try {
+      module = compiler()->compile_module(filepath);
+    } catch (FileNotFoundError &e) {
+      push_error(UnresolvedImportError(filepath.filename().string()));
+      continue;
+    }
+
+    for (auto const &import_name : import_names) {
+      if (auto import_type =
+              module->type_scope()->lookup(import_name.original_name);
+          import_type.has_value()) {
+        if (import_name.local_name.has_value()) {
+          type_scope_->declare(import_type.value(),
+                               import_name.local_name.value());
+        } else {
+          type_scope_->declare(import_type.value());
+        }
+      } else {
+        push_error(ImportError(import_name.original_name, filepath));
+      }
+    }
+  }
+
+  // import namespace.
+  for (auto const &filepath : import().get_namespaces_imports()) {
+    std::shared_ptr<Module> module;
+    try {
+      module = compiler()->compile_module(filepath);
+    } catch (FileNotFoundError &e) {
+      push_error(UnresolvedImportError(filepath.filename().string()));
+      continue;
+    }
+    for (auto it = module->type_scope()->cbegin();
+         it != module->type_scope()->cend(); it++) {
+      type_scope_->declare(it->second, it->first);
+    }
+    //    for (auto const&[name, type] : *module->type_scope()) {
+    //        type_scope_->declare(type, name);
+    //    }
   }
 }
 

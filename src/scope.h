@@ -17,6 +17,10 @@ namespace toolman {
 template <typename T>
 class Scope {
  public:
+  typedef typename std::map<std::string, std::shared_ptr<T>>::iterator iterator;
+  typedef typename std::map<std::string, std::shared_ptr<T>>::const_iterator
+      const_iterator;
+
   // Lookup returns the `T` with the given name if it is
   // found in this scope, otherwise it returns std::nullopt.
   std::optional<std::shared_ptr<T>> lookup(const std::string& name) {
@@ -34,6 +38,17 @@ class Scope {
     auto res = data_.emplace(item->get_name(), std::move(item));
     return res.second;
   }
+
+  bool declare(std::shared_ptr<T> item, const std::string& alias_name) {
+    auto res = data_.emplace(alias_name, std::move(item));
+    return res.second;
+  }
+
+  [[nodiscard]] iterator begin() const { return data_.begin(); }
+  [[nodiscard]] iterator end() const { return data_.end(); }
+
+  [[nodiscard]] const_iterator cbegin() const { return data_.cbegin(); }
+  [[nodiscard]] const_iterator cend() const { return data_.cend(); }
 
  private:
   // Map of names to `T`

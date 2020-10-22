@@ -6,10 +6,10 @@
 #define TOOLMAN_ENUM_FIELD_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <optional>
 
 #include "src/stmt_info.h"
 #include "src/type.h"

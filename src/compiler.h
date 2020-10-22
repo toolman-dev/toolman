@@ -12,7 +12,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "ToolmanLexer.h"
@@ -24,12 +23,15 @@ namespace toolman {
 
 #define DEF_PHASE_WALK(source, compiler)                     \
   auto ifs = std::ifstream(*(source), std::ios_base::in);    \
+  if (!ifs.is_open()) {                                      \
+    throw FileNotFoundError(source);                         \
+  }                                                          \
   antlr4::ANTLRInputStream input(ifs);                       \
   ToolmanLexer lexer(&input);                                \
   antlr4::CommonTokenStream tokens(&lexer);                  \
   tokens.fill();                                             \
   ToolmanParser parser(&tokens);                             \
-  antlr4::tree::ParseTree *tree = parser.document();         \
+  antlr4::tree::ParseTree* tree = parser.document();         \
   auto def_phase_walker = DeclPhaseWalker(source, compiler); \
   walker_.walk(&def_phase_walker, tree);
 
@@ -72,17 +74,24 @@ class Compiler {
  public:
   Compiler() : walker_(antlr4::tree::ParseTreeWalker::DEFAULT) {}
 
-  std::unique_ptr<Module> compile_module(const std::string &src_path) {
-    auto source_ptr = std::make_shared<std::filesystem::path>(
-        std::filesystem::absolute(src_path).lexically_normal());
+  // Use shared_ptr as return value, Convenient to no longer use import class
+  // later.
+  std::shared_ptr<Module> compile_module(const std::string& src_path) {
+    auto source = std::filesystem::absolute(src_path).lexically_normal();
+    if (auto it = modules_.find(source); it != modules_.end()) {
+      return it->second;
+    }
+    auto source_ptr = std::make_shared<std::filesystem::path>();
     DEF_PHASE_WALK(source_ptr, this);
     walker_.walk(&def_phase_walker, tree);
-    return std::make_unique<Module>(def_phase_walker.type_scope(),
-                                    def_phase_walker.option_scope(), source_ptr,
-                                    def_phase_walker.get_errors());
+    auto module = std::make_shared<Module>(
+        def_phase_walker.type_scope(), def_phase_walker.option_scope(),
+        source_ptr, def_phase_walker.get_errors());
+    modules_.emplace(source, module);
+    return module;
   }
 
-  CompileResult compile(std::filesystem::path ) {
+  CompileResult compile(const std::string& src_path) {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
 
@@ -103,7 +112,7 @@ class Compiler {
 
  private:
   antlr4::tree::ParseTreeWalker walker_;
-  std::map<std::filesystem::path, std::unique_ptr<Module>> modules_;
+  std::map<std::filesystem::path, std::shared_ptr<Module>> modules_;
 };
 }  // namespace toolman
 

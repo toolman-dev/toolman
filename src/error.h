@@ -6,19 +6,21 @@
 #define TOOLMAN_ERROR_H_
 
 #include <algorithm>
+#include <exception>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "enum_field.h"
+#include "src/enum_field.h"
 #include "src/option.h"
 #include "src/stmt_info.h"
 #include "src/type.h"
 
 namespace toolman {
 
-class Error {
+class Error : public std::exception {
  public:
   enum class ErrorType : char { Lexer, Syntax, Semantic };
   enum class Level : char { Note, Warning, Fatal };
@@ -30,6 +32,10 @@ class Error {
   [[nodiscard]] bool is_fatal() const { return level_ == Level::Fatal; }
 
   [[nodiscard]] virtual std::string error() const { return message_; }
+
+  [[nodiscard]] const char* what() const noexcept override {
+    return error().c_str();
+  }
 
  protected:
   ErrorType type_;
@@ -139,6 +145,33 @@ class OptionTypeMismatchError final : public Error {
               "Value must be " + option->type_name() + " for " +
                   option->type_name() + " option \"" + option->get_name() +
                   "\".") {}
+};
+
+class UnresolvedImportError final : public Error {
+ public:
+  explicit UnresolvedImportError(const std::string& origin_name)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "ModuleNotFoundError: unresolved import `" + origin_name + "`") {}
+};
+
+class ImportError final : public Error {
+ public:
+  ImportError(const std::string& origin_name, const std::string& filename)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "ImportError: cannot import name `" + origin_name + "` from `" +
+                  filename + "`") {}
+};
+
+// normal exception
+class FileNotFoundError : std::exception {
+ public:
+  explicit FileNotFoundError(std::shared_ptr<std::filesystem::path> filepath)
+      : filepath_(std::move(filepath)) {}
+
+  std::shared_ptr<std::filesystem::path> filepath() { return filepath_; }
+
+ private:
+  std::shared_ptr<std::filesystem::path> filepath_;
 };
 
 }  // namespace toolman
