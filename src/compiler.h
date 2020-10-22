@@ -21,20 +21,6 @@
 
 namespace toolman {
 
-#define DEF_PHASE_WALK(source, compiler)                     \
-  auto ifs = std::ifstream(*(source), std::ios_base::in);    \
-  if (!ifs.is_open()) {                                      \
-    throw FileNotFoundError(source);                         \
-  }                                                          \
-  antlr4::ANTLRInputStream input(ifs);                       \
-  ToolmanLexer lexer(&input);                                \
-  antlr4::CommonTokenStream tokens(&lexer);                  \
-  tokens.fill();                                             \
-  ToolmanParser parser(&tokens);                             \
-  antlr4::tree::ParseTree* tree = parser.document();         \
-  auto def_phase_walker = DeclPhaseWalker(source, compiler); \
-  walker_.walk(&def_phase_walker, tree);
-
 class Module : public HasMultiError {
  public:
   Module(std::shared_ptr<TypeScope> type_scope,
