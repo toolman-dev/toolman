@@ -36,9 +36,7 @@ class Import {
   // from 'xxx.tm' import x as y
   void add_import(const std::string& filename,
                   std::vector<ImportName> import_names) {
-    auto normal_filename =
-        std::filesystem::absolute(filename).lexically_normal();
-    if (auto import_name_set = regular_imports_.find(normal_filename);
+    if (auto import_name_set = regular_imports_.find(filename);
         import_name_set != regular_imports_.end()) {
       import_name_set->second.insert(
           std::make_move_iterator(import_names.begin()),
@@ -46,7 +44,7 @@ class Import {
     } else {
       // filename not found
       regular_imports_.emplace(
-          normal_filename,
+          filename,
           std::set<ImportName>(std::make_move_iterator(import_names.begin()),
                                std::make_move_iterator(import_names.end())));
     }
@@ -54,23 +52,21 @@ class Import {
 
   // from 'xxx.tm' import *
   void add_import_star(const std::string& filename) {
-    auto normal_filename =
-        std::filesystem::absolute(filename).lexically_normal();
-    namespaces_imports_.emplace(normal_filename);
+    namespaces_imports_.emplace(filename);
   }
 
-  [[nodiscard]] std::map<std::filesystem::path, std::set<ImportName>>
+  [[nodiscard]] std::map<std::string, std::set<ImportName>>
   get_regular_imports() const {
     return regular_imports_;
   }
 
-  [[nodiscard]] std::set<std::filesystem::path> get_namespaces_imports() const {
+  [[nodiscard]] std::set<std::string> get_namespaces_imports() const {
     return namespaces_imports_;
   }
 
  private:
-  std::map<std::filesystem::path, std::set<ImportName>> regular_imports_;
-  std::set<std::filesystem::path> namespaces_imports_;
+  std::map<std::string, std::set<ImportName>> regular_imports_;
+  std::set<std::string> namespaces_imports_;
 };
 }  // namespace toolman
 #endif  // TOOLMAN_IMPORT_H_

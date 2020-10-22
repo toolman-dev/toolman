@@ -77,11 +77,14 @@ class Compiler {
   // Use shared_ptr as return value, Convenient to no longer use import class
   // later.
   std::shared_ptr<Module> compile_module(const std::string& src_path) {
-    auto source = std::filesystem::absolute(src_path).lexically_normal();
+    auto source = std::filesystem::path(src_path).lexically_normal();
+    if (source.is_relative()) {
+      source = base_path_ / source;
+    }
     if (auto it = modules_.find(source); it != modules_.end()) {
       return it->second;
     }
-    auto source_ptr = std::make_shared<std::filesystem::path>();
+    auto source_ptr = std::make_shared<std::filesystem::path>(source);
     DEF_PHASE_WALK(source_ptr, this);
     walker_.walk(&def_phase_walker, tree);
     auto module = std::make_shared<Module>(
@@ -94,7 +97,7 @@ class Compiler {
   CompileResult compile(const std::string& src_path) {
     auto source_ptr = std::make_shared<std::filesystem::path>(
         std::filesystem::absolute(src_path).lexically_normal());
-
+    base_path_ = source_ptr->parent_path();
     DEF_PHASE_WALK(source_ptr, this);
 
     auto ref_phase_walker =
@@ -113,6 +116,7 @@ class Compiler {
  private:
   antlr4::tree::ParseTreeWalker walker_;
   std::map<std::filesystem::path, std::shared_ptr<Module>> modules_;
+  std::filesystem::path base_path_;
 };
 }  // namespace toolman
 

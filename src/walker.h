@@ -44,6 +44,9 @@ class ImportBuilder {
   }
 
   void end_import() {
+    if (current_import_name_.has_value()) {
+      current_import_names_.push_back(current_import_name_.value());
+    }
     if (is_star_) {
       import_.add_import_star(current_filename_);
     } else {

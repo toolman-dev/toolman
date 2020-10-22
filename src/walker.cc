@@ -21,12 +21,12 @@ void DeclPhaseWalker::exitImportStatement(
   import_builder_.end_import();
 
   // import regular imports.
-  for (auto const &[filepath, import_names] : import().get_regular_imports()) {
+  for (auto const &[filename, import_names] : import().get_regular_imports()) {
     std::shared_ptr<Module> module;
     try {
-      module = compiler()->compile_module(filepath);
+      module = compiler()->compile_module(filename);
     } catch (FileNotFoundError &e) {
-      push_error(UnresolvedImportError(filepath.filename().string()));
+      push_error(UnresolvedImportError(filename));
       continue;
     }
 
@@ -41,18 +41,18 @@ void DeclPhaseWalker::exitImportStatement(
           type_scope_->declare(import_type.value());
         }
       } else {
-        push_error(ImportError(import_name.original_name, filepath));
+        push_error(ImportError(import_name.original_name, filename));
       }
     }
   }
 
   // import namespace.
-  for (auto const &filepath : import().get_namespaces_imports()) {
+  for (auto const &filename : import().get_namespaces_imports()) {
     std::shared_ptr<Module> module;
     try {
-      module = compiler()->compile_module(filepath);
+      module = compiler()->compile_module(filename);
     } catch (FileNotFoundError &e) {
-      push_error(UnresolvedImportError(filepath.filename().string()));
+      push_error(UnresolvedImportError(filename));
       continue;
     }
     for (auto it = module->type_scope()->cbegin();
