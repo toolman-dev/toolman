@@ -34,6 +34,7 @@ class TypescriptGenerator : public Generator {
       const std::shared_ptr<StructType>& struct_type) override {
     ostream << "export interface " << struct_type->get_name() << " {" << NL;
     for (const auto& field : struct_type->get_fields()) {
+      generate_doc_comment(ostream, field.get_comments(), INDENT_1);
       ostream << INDENT_1;
       generate_field(ostream, &field);
       ostream << NL;
@@ -52,6 +53,18 @@ class TypescriptGenerator : public Generator {
   }
 
  private:
+  void generate_doc_comment(std::ostream& ostream,
+                            std::vector<std::string> comments, std::string indent) {
+    if (comments.size() == 0) {
+      return;
+    }
+    ostream << indent << "/**" << NL;
+    for (auto& comment : comments) {
+      ostream << indent << "* " << comment << NL;
+    }
+    ostream << indent << "*/" << NL;
+  }
+
   void generate_field(std::ostream& ostream, const Field* field) const {
     ostream << field->get_name();
     if (field->is_optional()) {

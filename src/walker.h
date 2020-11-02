@@ -308,8 +308,13 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
   }
 
   void enterStructField(ToolmanParser::StructFieldContext* node) override {
-    auto field =
-        Field(node->identifierName()->getText(), get_stmt_info(node, source_));
+    std::vector<std::string> comments;
+    for (auto& dc : node->DocumentComment()) {
+      comments.push_back(dc->getText().substr(3));
+    }
+    auto field = Field(node->identifierName()->getText(),
+                       get_stmt_info(node, source_), comments);
+
     if (build_state_ == BuildState::IN_STRUCT) {
       struct_builder_.start_field(field);
     } else if (build_state_ == BuildState::IN_ONEOF) {
@@ -461,8 +466,13 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
   }
 
   void enterEnumField(ToolmanParser::EnumFieldContext* node) override {
+    std::vector<std::string> comments;
+    for (auto& dc : node->DocumentComment()) {
+      comments.push_back(dc->getText().substr(3));
+    }
     auto enum_field = EnumField(node->identifierName()->getText(),
-                                get_stmt_info(node, source_));
+                                get_stmt_info(node, source_), comments);
+
     auto value = std::stoi(node->intgerLiteral()->getText());
     if (!enum_field.set_value(value)) {
       push_error(

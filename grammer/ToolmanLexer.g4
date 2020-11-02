@@ -9,6 +9,9 @@ channels {
 	ERROR
 }
 
+DocumentComment: '///' ~[\r\n\u2028\u2029]*;
+InlineComment: '/**' .*? '**/';
+
 MultiLineComment: '/*' .*? '*/' -> channel(HIDDEN);
 SingleLineComment:
 	'//' ~[\r\n\u2028\u2029]* -> channel(HIDDEN);

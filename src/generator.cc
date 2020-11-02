@@ -11,8 +11,7 @@
 
 namespace toolman::generator {
 
-TargetLanguage target_language_from_string(
-    std::string target) {
+TargetLanguage target_language_from_string(std::string target) {
   std::transform(target.begin(), target.end(), target.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   if (target == "java") {

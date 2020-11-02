@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "src/stmt_info.h"
 #include "src/type.h"
@@ -21,14 +22,28 @@ class Field final : public HasStmtInfo {
       : name_(name),
         HasStmtInfo(std::forward<SI>(stmt_info)),
         optional_(false) {}
+
   template <typename S, typename SI>
-  Field(S&& name, std::shared_ptr<Type> type, bool optional, SI&& stmt_info)
+  Field(S&& name, SI&& stmt_info, std::vector<std::string> comments)
+      : name_(name),
+        comments_(comments),
+        HasStmtInfo(std::forward<SI>(stmt_info)),
+        optional_(false) {}
+
+  template <typename S, typename SI>
+  Field(S&& name, std::shared_ptr<Type> type, bool optional, SI&& stmt_info,
+        std::vector<std::string> comments)
       : type_(std::forward<S>(type)),
         name_(name),
         optional_(optional),
+        comments_(comments),
         HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
   [[nodiscard]] const std::string& get_name() const { return name_; }
+
+  [[nodiscard]] const std::vector<std::string> get_comments() const {
+    return comments_;
+  }
 
   [[nodiscard]] const std::shared_ptr<Type>& get_type() const { return type_; }
 
@@ -43,6 +58,7 @@ class Field final : public HasStmtInfo {
  private:
   std::shared_ptr<Type> type_;
   std::string name_;
+  std::vector<std::string> comments_;
   bool optional_;
 };
 
