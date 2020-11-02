@@ -54,7 +54,8 @@ class TypescriptGenerator : public Generator {
 
  private:
   void generate_doc_comment(std::ostream& ostream,
-                            std::vector<std::string> comments, std::string indent) {
+                            std::vector<std::string> comments,
+                            std::string indent) {
     if (comments.size() == 0) {
       return;
     }
