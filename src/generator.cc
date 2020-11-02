@@ -11,6 +11,20 @@
 
 namespace toolman::generator {
 
+TargetLanguage target_language_from_string(
+    std::string target) {
+  std::transform(target.begin(), target.end(), target.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  if (target == "java") {
+    return TargetLanguage::JAVA;
+  } else if (target == "go" || target == "golang") {
+    return TargetLanguage::GOLANG;
+  } else if (target == "ts" || target == "typescript") {
+    return TargetLanguage::TYPESCRIPT;
+  }
+  return TargetLanguage::JAVA;
+}
+
 void Generator::generate(std::ostream& ostream,
                          const std::unique_ptr<Document>& document) {
   ostream << single_line_comment(

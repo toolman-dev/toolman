@@ -26,6 +26,9 @@
 namespace toolman::generator {
 
 enum class TargetLanguage : char { GOLANG, TYPESCRIPT, JAVA };
+
+TargetLanguage target_language_from_string(std::string target);
+
 void generate(std::unique_ptr<Document> document, TargetLanguage targetLanguage,
               std::ostream& ostream);
 
