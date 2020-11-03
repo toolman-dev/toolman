@@ -55,7 +55,9 @@ class JavaGenerator : public Generator {
             auto field_name = camelcase(oneof_field.get_name());
             auto oneof_item_class_name = struct_name + capitalize(field_name);
             ostream << INDENT_1 << "public class " << oneof_item_class_name
-                    << " implements " << oneof_name << " {" << NL << INDENT_2
+                    << " implements " << oneof_name << " {" << NL2
+                    << generate_doc_comment(field.get_comments(), INDENT_2)
+                    << INDENT_2
                     << generate_struct_field(struct_type.get(), oneof_field)
                     << NL
                     << generate_getter_and_setter(struct_type.get(),
@@ -81,7 +83,8 @@ class JavaGenerator : public Generator {
             << "private static final long serialVersionUID = 0L;" << NL;
 
     for (const auto &field : struct_type->get_fields()) {
-      ostream << INDENT_2 << generate_struct_field(struct_type.get(), field)
+      ostream << generate_doc_comment(field.get_comments(), INDENT_2)
+              << INDENT_2 << generate_struct_field(struct_type.get(), field)
               << NL;
     }
     ostream << NL;
@@ -99,7 +102,8 @@ class JavaGenerator : public Generator {
             << NL;
 
     for (const auto &field : enum_type->get_fields()) {
-      ostream << INDENT_2 << camelcase(field.get_name()) << "("
+      ostream << generate_doc_comment(field.get_comments(), INDENT_2)
+              << INDENT_2 << camelcase(field.get_name()) << "("
               << field.get_value() << ")," << NL;
     }
     ostream << INDENT_2 << ";" << NL;
@@ -166,6 +170,20 @@ class JavaGenerator : public Generator {
                                     const std::string &field_name) {
     return "Is" + capitalize(camelcase(struct_name)) +
            capitalize(camelcase(field_name));
+  }
+
+  static std::string generate_doc_comment(std::vector<std::string> comments,
+                                          std::string indent) {
+    if (comments.size() == 0) {
+      return "";
+    }
+    std::stringstream doc_comment;
+    doc_comment << indent << "/**" << NL;
+    for (auto &comment : comments) {
+      doc_comment << indent << "* " << comment << NL;
+    }
+    doc_comment << indent << "*/" << NL;
+    return doc_comment.str();
   }
 
   [[nodiscard]] static std::string type_to_java_type(Type *type,

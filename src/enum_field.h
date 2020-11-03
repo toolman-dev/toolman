@@ -6,10 +6,10 @@
 #define TOOLMAN_ENUM_FIELD_H_
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "src/stmt_info.h"
 #include "src/type.h"
@@ -22,7 +22,17 @@ class EnumField final : public HasStmtInfo {
       : name_(std::forward<S>(name)),
         HasStmtInfo(std::forward<SI>(stmt_info)) {}
 
+  template <typename S, typename SI>
+  EnumField(S&& name, SI&& stmt_info, std::vector<std::string> comments)
+      : name_(std::forward<S>(name)),
+        comments_(comments),
+        HasStmtInfo(std::forward<SI>(stmt_info)) {}
+
   [[nodiscard]] const std::string& get_name() const { return name_; }
+
+  [[nodiscard]] const std::vector<std::string> get_comments() const {
+    return comments_;
+  }
 
   [[nodiscard]] int get_value() const { return value_; }
 
@@ -43,6 +53,7 @@ class EnumField final : public HasStmtInfo {
  private:
   std::string name_;
   int value_;
+  std::vector<std::string> comments_;
   inline static std::unordered_map<int, EnumField> value_mapping_;
 };
 }  // namespace toolman

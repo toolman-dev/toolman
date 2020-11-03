@@ -81,7 +81,11 @@ class GolangGenerator : public Generator {
 
     ostream << capitalized_struct_name << " struct {" << NL;
     for (const auto& field : struct_type->get_fields()) {
-      ostream << "  " << capitalize(field.get_name()) << " "
+      for (const auto& comment : field.get_comments()) {
+        ostream << INDENT_1 << single_line_comment(comment) << NL;
+      }
+
+      ostream << INDENT_1 << capitalize(field.get_name()) << " "
               << (field.is_optional() && !field.get_type()->is_map() &&
                           !field.get_type()->is_list()
                       ? "*"
@@ -101,6 +105,9 @@ class GolangGenerator : public Generator {
     ostream << "type " << capitalized_name << " int32" << NL;
     ostream << "const (" << NL;
     for (const auto& field : enum_type->get_fields()) {
+      for (const auto& comment : field.get_comments()) {
+        ostream << single_line_comment(comment) << NL;
+      }
       ostream << capitalized_name << "_" << field.get_name() << " "
               << capitalized_name << " = " << field.get_value() << NL;
     }
