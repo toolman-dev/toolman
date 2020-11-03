@@ -233,7 +233,12 @@ class CustomTypeBuilder {
 class RefPhaseWalker final : public ToolmanParserBaseListener,
                              public HasMultiError {
  public:
-  enum class BuildState : char { IN_STRUCT, IN_ONEOF, RECURSIVE_ONFOF };
+  enum class BuildState : char {
+    IN_STRUCT,
+    IN_ONEOF,
+    RECURSIVE_ONFOF,
+    IN_API_PATH_PARAM
+  };
 
   RefPhaseWalker(std::shared_ptr<TypeScope> type_scope,
                  std::shared_ptr<OptionScope> option_scope,
@@ -497,6 +502,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
       struct_builder_.set_current_field_type(oneof_builder_.end_custom_type());
     }
     build_state_ = BuildState::IN_STRUCT;
+  }
+
+  void enterPathParam(ToolmanParser::PathParamContext*) override {
+    build_state_ = BuildState::IN_API_PATH_PARAM;
   }
 
  private:

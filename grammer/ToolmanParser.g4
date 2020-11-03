@@ -1,7 +1,8 @@
 /**
  * A Toolman grammar for ANTLR v4.
  * 
- * @author taoyu @author taowei
+ * @author taoyu
+ * @author taowei
  */
 parser grammar ToolmanParser;
 
@@ -17,9 +18,8 @@ importStatement: From StringLiteral Import importList SemiColon;
 importList:
 	importName (As importNameAlias)? (
 		Comma importName (As importNameAlias)?
-	)*      # FromImport
-	| Star  # FromImportStar
-	;
+	)*		# FromImport
+	| Star	# FromImportStar;
 
 importName: identifierName;
 
@@ -27,6 +27,9 @@ importNameAlias: identifierName;
 
 //
 // Option
+// 
+//
+// 
 //
 
 optionStatement:
@@ -46,7 +49,41 @@ typeDecl:
 
 signleTypeDecl: structDecl | enumDecl;
 
-apiDecl: Api; // TODO
+apiDecl:
+	Api identifierName (
+		signleApiDecl
+		| OpenParen signleApiDecl (Comma signleApiDecl)* CloseParen
+	);
+
+signleApiDecl:
+	httpMethod path OpenParen identifierName CloseParen apiReturns;
+
+apiReturns: Returns OpenBrace returnsList CloseBrace;
+
+returnsList: returnsItem (Comma returnsItem)*;
+
+returnsItem:
+	DecIntegerLiteral Arrow (
+		identifierName
+		| OpenBrace structFieldList* OpenBrace
+	);
+
+httpMethod:
+	Get
+	| Post
+	| Delete
+	| Put
+	| Patch
+	| Head
+	| Options
+	| Trace
+	| Connect;
+
+path: (Slash? pathParam? pathString pathParam?)+;
+
+pathParam: OpenBrace structField CloseBrace;
+
+pathString: PathString | identifierName;
 
 structDecl:
 	identifierName Struct OpenBrace structFieldList* CloseBrace;
@@ -103,7 +140,9 @@ keyword:
 	| I64
 	| U32
 	| U64
-	| Float;
+	| Float
+	| Returns
+	| httpMethod;
 
 intgerLiteral:
 	DecIntegerLiteral

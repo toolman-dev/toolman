@@ -1,7 +1,8 @@
 /**
  * A Toolman lexer grammar for ANTLR v4.
  * 
- * @author taoyu @author taowei
+ * @author taoyu
+ * @author taowei
  */
 lexer grammar ToolmanLexer;
 
@@ -28,6 +29,8 @@ Doublecolon: '::';
 Ellipsis: '...';
 Or: '|';
 Star: '*';
+Slash: '/';
+Arrow : '->';
 
 /// Boolean Literals
 
@@ -63,6 +66,7 @@ U32: 'u32';
 U64: 'u64';
 Float: 'float';
 Option: 'option';
+Returns: 'returns';
 
 /// HTTP methods
 Get: [Gg] 'et' | 'GET';
@@ -83,6 +87,14 @@ Identifier: IdentifierStart IdentifierPart*;
 StringLiteral:
 	'"' DoubleStringCharacter* '"'
 	| '\'' SingleStringCharacter* '\'';
+
+HEX
+   : ('%' [a-fA-F0-9] [a-fA-F0-9]) +
+   ;
+
+PathString
+   : ([a-zA-Z~0-9] | HEX) ([a-zA-Z0-9.+-] | HEX)*
+   ;
 
 WhiteSpaces: [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
 
