@@ -75,11 +75,11 @@ fieldType: type_;
 
 structFieldList: structField (Comma structField)*;
 
-structField: DocumentComment* identifierName Colon fieldType QuestionMark?;
+structField: DocumentComment* InlineComment? identifierName Colon fieldType QuestionMark? InlineComment?;
 
 enumFieldList: enumField (Comma enumField)*;
 
-enumField: DocumentComment* identifierName Assign intgerLiteral;
+enumField: DocumentComment* InlineComment? identifierName Assign intgerLiteral InlineComment?;
 
 // SomeEnum::Item
 enumItem: identifierName Doublecolon identifierName;

@@ -312,6 +312,9 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
     for (auto& dc : node->DocumentComment()) {
       comments.push_back(dc->getText().substr(3));
     }
+    for (auto& ic : node->InlineComment()) {
+      comments.push_back(ic->getText().substr(3, ic->getText().size() - 6));
+    }
     auto field = Field(node->identifierName()->getText(),
                        get_stmt_info(node, source_), comments);
 
@@ -470,6 +473,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
     for (auto& dc : node->DocumentComment()) {
       comments.push_back(dc->getText().substr(3));
     }
+
+    for (auto& ic : node->InlineComment()) {
+      comments.push_back(ic->getText().substr(3, ic->getText().size() - 6));
+    }
+
     auto enum_field = EnumField(node->identifierName()->getText(),
                                 get_stmt_info(node, source_), comments);
 

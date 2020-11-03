@@ -10,7 +10,7 @@ channels {
 }
 
 DocumentComment: '///' ~[\r\n\u2028\u2029]*;
-InlineComment: '/**' .*? '**/';
+InlineComment: '/**' ~[\r\n\u2028\u2029]* '**/';
 
 MultiLineComment: '/*' .*? '*/' -> channel(HIDDEN);
 SingleLineComment:
