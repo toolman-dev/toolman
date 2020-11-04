@@ -15,6 +15,7 @@
 
 #include "ToolmanLexer.h"
 #include "ToolmanParserBaseListener.h"
+#include "src/api.h"
 #include "src/custom_type.h"
 #include "src/document.h"
 #include "src/error.h"
@@ -195,12 +196,14 @@ class CustomTypeBuilder {
 
   void end_field() {
     if (current_field_.has_value()) {
-      if (!current_custom_type_->append_field(current_field_.value())) {
-        auto current_field = current_field_.value();
-        throw DuplicateFieldDeclError(
-            current_custom_type_->get_field_by_name(current_field.get_name())
-                .value(),
-            current_field.get_stmt_info());
+      auto current_field = current_field_.value();
+      if (auto field_opt =
+              current_custom_type_->get_field_by_name(current_field.get_name());
+          field_opt.has_value()) {
+        throw DuplicateFieldDeclError(field_opt.value(),
+                                      current_field.get_stmt_info());
+      } else {
+        current_custom_type_->append_field(current_field);
       }
       clear_current_field();
     }
@@ -209,12 +212,6 @@ class CustomTypeBuilder {
   void set_current_field_type(std::shared_ptr<Type> type) {
     if (current_field_.has_value()) {
       current_field_.value().set_type(std::move(type));
-    }
-  }
-
-  void set_current_field_optional(bool optional) {
-    if (current_field_.has_value()) {
-      current_field_.value().set_optional(optional);
     }
   }
 
@@ -228,6 +225,48 @@ class CustomTypeBuilder {
  private:
   std::optional<FIELD> current_field_;
   std::shared_ptr<CustomType<FIELD>> current_custom_type_;
+};
+
+class ApiBuilder {
+ public:
+  void start_api(Api::HttpMethod http_method,
+                 std::shared_ptr<Type> body_param) {
+    api_ = std::make_optional(Api(http_method, std::move(body_param)));
+  }
+
+  void start_field(Field field) {
+    current_field_ = std::optional<Field>(std::move(field));
+  }
+
+  void clear_current_field() { current_field_ = std::nullopt; }
+
+  void end_field() {
+    if (!api_.has_value()) {
+      return;
+    }
+    auto api = api_.value();
+    if (current_field_.has_value()) {
+      auto current_field = current_field_.value();
+      if (auto param_opt = api.get_path_param_by_name(current_field.get_name());
+          param_opt.has_value()) {
+        throw DuplicatePathParamDeclError(current_field,
+                                          current_field.get_stmt_info());
+      } else {
+        api.add_path_param(
+            PathParam{current_field_.value(), current_path_.length()});
+      }
+      clear_current_field();
+    }
+  }
+
+  void append_path(const std::string& partial_path) {
+    current_path_.append(partial_path);
+  }
+
+ private:
+  std::optional<Field> current_field_;
+  std::string current_path_;
+  std::optional<Api> api_;
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener,
@@ -322,24 +361,24 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
     }
     auto field = Field(node->identifierName()->getText(),
                        get_stmt_info(node, source_), comments);
-
+    field.set_optional(node->QuestionMark() != nullptr);
     if (build_state_ == BuildState::IN_STRUCT) {
       struct_builder_.start_field(field);
     } else if (build_state_ == BuildState::IN_ONEOF) {
       oneof_builder_.start_field(field);
+    } else if (build_state_ == BuildState::IN_API_PATH_PARAM) {
+      api_builder_.start_field(field);
     }
   }
 
   void exitStructField(ToolmanParser::StructFieldContext* node) override {
     try {
       if (build_state_ == BuildState::IN_STRUCT) {
-        struct_builder_.set_current_field_optional(node->QuestionMark() !=
-                                                   nullptr);
         struct_builder_.end_field();
       } else if (build_state_ == BuildState::IN_ONEOF) {
-        oneof_builder_.set_current_field_optional(node->QuestionMark() !=
-                                                  nullptr);
         oneof_builder_.end_field();
+      } else if (build_state_ == BuildState::IN_API_PATH_PARAM) {
+        api_builder_.end_field();
       }
     } catch (DuplicateFieldDeclError& e) {
       push_error(e);
@@ -526,6 +565,70 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
     build_state_ = BuildState::IN_API_PATH_PARAM;
   }
 
+  void enterApiDecl(ToolmanParser::ApiDeclContext* node) override {
+    auto group_name = node->identifierName()->getText();
+  }
+
+  void enterSingleApiDecl(ToolmanParser::SingleApiDeclContext* node) override {
+    Api::HttpMethod http_method;
+    switch (node->httpMethod()->getStart()->getType()) {
+      case ToolmanLexer::Get:
+        http_method = Api::HttpMethod::GET;
+        break;
+      case ToolmanLexer::Post:
+        http_method = Api::HttpMethod::POST;
+        break;
+      case ToolmanLexer::Delete:
+        http_method = Api::HttpMethod::DELETE;
+        break;
+      case ToolmanLexer::Put:
+        http_method = Api::HttpMethod::PUT;
+        break;
+      case ToolmanLexer::Patch:
+        http_method = Api::HttpMethod::PATCH;
+        break;
+      case ToolmanLexer::Head:
+        http_method = Api::HttpMethod::HEAD;
+        break;
+      case ToolmanLexer::Options:
+        http_method = Api::HttpMethod::OPTIONS;
+        break;
+      case ToolmanLexer::Trace:
+        http_method = Api::HttpMethod::TRACE;
+        break;
+      case ToolmanLexer::Connect:
+        http_method = Api::HttpMethod::CONNECT;
+        break;
+    }
+
+    auto api_body_param_ident = node->identifierName();
+    auto api_body_param_opt =
+        type_scope_->lookup(api_body_param_ident->getText());
+    if (!api_body_param_opt.has_value()) {
+      push_error(CustomTypeNotFoundError(
+          api_body_param_ident->getText(),
+          get_stmt_info(api_body_param_ident, source_)));
+      return;
+    }
+    api_builder_.start_api(http_method, api_body_param_opt.value());
+  }
+
+  void enterPath(ToolmanParser::PathContext* node) override {
+    for (auto child : node->children) {
+      if (child == nullptr) {
+        continue;
+      }
+      if (typeid(child) == typeid(antlr4::tree::TerminalNode*)) {
+        auto slash = dynamic_cast<antlr4::tree::TerminalNode*>(child);
+        api_builder_.append_path(slash->getText());
+      } else if (typeid(child) == typeid(ToolmanParser::PathStringContext*)) {
+        auto path_string =
+            dynamic_cast<ToolmanParser::PathStringContext*>(child);
+        api_builder_.append_path(path_string->getText());
+      }
+    }
+  }
+
  private:
   std::unique_ptr<Document> document_;
   CustomTypeBuilder<Field> struct_builder_;
@@ -536,6 +639,7 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
   std::shared_ptr<OptionScope> option_scope_;
   std::shared_ptr<std::filesystem::path> source_;
   BuildState build_state_;
+  ApiBuilder api_builder_;
 };
 
 }  // namespace toolman

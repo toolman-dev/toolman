@@ -23,14 +23,7 @@ class CustomType : public Type {
   CustomType(S&& name, SI&& stmt_info)
       : Type(std::forward<S>(name), std::forward<SI>(stmt_info)) {}
 
-  bool append_field(F f) {
-    // returns false when there is a conflict of field names
-    if (get_field_by_name(f.get_name()).has_value()) {
-      return false;
-    }
-    fields_.push_back(std::move(f));
-    return true;
-  }
+  void append_field(F f) { fields_.push_back(std::move(f)); }
 
   [[nodiscard]] std::vector<F> get_fields() const { return fields_; }
 

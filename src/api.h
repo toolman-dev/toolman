@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/field.h"
@@ -26,11 +27,6 @@ class ApiReturn {
   std::shared_ptr<Type> resp_;
 };
 
-class ApiGroup {
- private:
-  std::string group_name_;
-};
-
 class Api {
  public:
   enum class HttpMethod : char {
@@ -45,6 +41,23 @@ class Api {
     CONNECT
   };
 
+  Api(HttpMethod http_method, std::shared_ptr<Type> body_param)
+      : http_method_(http_method), body_param_(std::move(body_param)) {}
+
+  void add_path_param(PathParam path_param) {
+    path_params_.push_back(std::move(path_param));
+  }
+
+  [[nodiscard]] std::optional<PathParam> get_path_param_by_name(
+      const std::string& param_name) const {
+    for (const auto& pp : path_params_) {
+      if (pp.field.get_name() == param_name) {
+        return std::make_optional(pp);
+      }
+    }
+    return std::nullopt;
+  }
+
  private:
   HttpMethod http_method_;
   std::string path_;
@@ -53,5 +66,16 @@ class Api {
 
   std::vector<ApiReturn> returns_;
 };
+
+class ApiGroup {
+ public:
+  void add_api(Api api) { apis_.push_back(std::move(api)); }
+
+ private:
+  std::string group_name_;
+  std::string api_prefix_;
+  std::vector<Api> apis_;
+};
+
 }  // namespace toolman
 #endif  // TOOLMAN_API_H_

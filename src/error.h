@@ -120,6 +120,15 @@ class DuplicateEnumFieldValueError final : public Error {
                   "` already exists") {}
 };
 
+class DuplicatePathParamDeclError final : public Error {
+ public:
+  template <typename FIELD, typename SI>
+  DuplicatePathParamDeclError(FIELD first_decl_field, SI&& stmt_info)
+      : Error(Error::ErrorType::Semantic, Error::Level::Fatal,
+              "path param `" + first_decl_field.get_name() +
+                  "` is already declared") {}
+};
+
 class RecursiveOneofTypeError final : public Error {
  public:
   template <typename SI>

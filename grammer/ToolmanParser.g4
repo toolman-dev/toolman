@@ -41,21 +41,21 @@ decl: typeDecl | apiDecl;
 
 typeDecl:
 	Type (
-		signleTypeDecl
+		singleTypeDecl
 		| (
-			OpenParen signleTypeDecl (Comma signleTypeDecl)* CloseParen
+			OpenParen singleTypeDecl (Comma singleTypeDecl)* CloseParen
 		)
 	);
 
-signleTypeDecl: structDecl | enumDecl;
+singleTypeDecl: structDecl | enumDecl;
 
 apiDecl:
 	Api identifierName (
-		signleApiDecl
-		| OpenParen signleApiDecl (Comma signleApiDecl)* CloseParen
+		singleApiDecl
+		| OpenParen singleApiDecl (Comma singleApiDecl)* CloseParen
 	);
 
-signleApiDecl:
+singleApiDecl:
 	httpMethod path OpenParen identifierName CloseParen apiReturns;
 
 apiReturns: Returns OpenBrace returnsList CloseBrace;
