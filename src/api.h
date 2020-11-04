@@ -58,6 +58,8 @@ class Api {
     return std::nullopt;
   }
 
+  void set_path(std::string path) { path_ = std::move(path); }
+
  private:
   HttpMethod http_method_;
   std::string path_;
@@ -69,6 +71,9 @@ class Api {
 
 class ApiGroup {
  public:
+  explicit ApiGroup(std::string group_name)
+      : group_name_(std::move(group_name)) {}
+
   void add_api(Api api) { apis_.push_back(std::move(api)); }
 
  private:

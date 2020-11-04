@@ -229,9 +229,22 @@ class CustomTypeBuilder {
 
 class ApiBuilder {
  public:
+  void start_api_group(std::string group_name) {
+    api_group_ = std::make_optional<ApiGroup>(std::move(group_name));
+  }
+
+  ApiGroup end_api_group() { return api_group_.value(); }
+
   void start_api(Api::HttpMethod http_method,
                  std::shared_ptr<Type> body_param) {
     api_ = std::make_optional(Api(http_method, std::move(body_param)));
+  }
+
+  void end_api() {
+    if (api_group_.has_value() && api_.has_value()) {
+      api_group_.value().add_api(api_.value());
+      api_ = std::nullopt;
+    }
   }
 
   void start_field(Field field) {
@@ -263,10 +276,16 @@ class ApiBuilder {
     current_path_.append(partial_path);
   }
 
+  void end_path() {
+    api_->set_path(current_path_);
+    current_path_.clear();
+  }
+
  private:
   std::optional<Field> current_field_;
   std::string current_path_;
   std::optional<Api> api_;
+  std::optional<ApiGroup> api_group_;
 };
 
 class RefPhaseWalker final : public ToolmanParserBaseListener,
@@ -566,7 +585,11 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
   }
 
   void enterApiDecl(ToolmanParser::ApiDeclContext* node) override {
-    auto group_name = node->identifierName()->getText();
+    api_builder_.start_api_group(node->identifierName()->getText());
+  }
+
+  void exitApiDecl(ToolmanParser::ApiDeclContext*) override {
+    document_->insert_api_group(api_builder_.end_api_group());
   }
 
   void enterSingleApiDecl(ToolmanParser::SingleApiDeclContext* node) override {
@@ -613,6 +636,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
     api_builder_.start_api(http_method, api_body_param_opt.value());
   }
 
+  void exitSingleApiDecl(ToolmanParser::SingleApiDeclContext*) override {
+    api_builder_.end_api();
+  }
+
   void enterPath(ToolmanParser::PathContext* node) override {
     for (auto child : node->children) {
       if (child == nullptr) {
@@ -627,6 +654,10 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
         api_builder_.append_path(path_string->getText());
       }
     }
+  }
+
+  void exitPath(ToolmanParser::PathContext*) override {
+    api_builder_.end_path();
   }
 
  private:

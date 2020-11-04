@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "src/api.h"
 #include "src/custom_type.h"
 #include "src/option.h"
 #include "src/type.h"
@@ -51,10 +52,15 @@ class Document final {
     source_ = std::move(source);
   }
 
+  void insert_api_group(ApiGroup api_group) {
+    api_groups_.emplace_back(std::move(api_group));
+  }
+
  private:
   std::vector<std::shared_ptr<StructType>> struct_types_;
   std::vector<std::shared_ptr<EnumType>> enum_types_;
   std::vector<std::shared_ptr<Option>> options_;
+  std::vector<ApiGroup> api_groups_;
   std::shared_ptr<std::filesystem::path> source_;
 };
 }  // namespace toolman
