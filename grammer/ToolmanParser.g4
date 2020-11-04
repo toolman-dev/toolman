@@ -118,9 +118,6 @@ enumFieldList: enumField (Comma enumField)*;
 
 enumField: DocumentComment* InlineComment? identifierName Assign intgerLiteral InlineComment?;
 
-// SomeEnum::Item
-enumItem: identifierName Doublecolon identifierName;
-
 identifierName: Identifier | reservedWord;
 
 reservedWord: keyword | BooleanLiteral;

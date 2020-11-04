@@ -21,9 +21,8 @@ struct PathParam {
   std::string::size_type pos_in_path{};
 };
 
-class ApiReturn {
- private:
-  std::uint16_t http_status_code_;
+struct ApiReturn {
+  int http_status_code_;
   std::shared_ptr<Type> resp_;
 };
 
@@ -59,6 +58,10 @@ class Api {
   }
 
   void set_path(std::string path) { path_ = std::move(path); }
+
+  void insert_api_return(ApiReturn api_return) {
+    returns_.push_back(std::move(api_return));
+  }
 
  private:
   HttpMethod http_method_;

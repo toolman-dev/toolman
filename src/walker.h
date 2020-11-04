@@ -281,6 +281,10 @@ class ApiBuilder {
     current_path_.clear();
   }
 
+  void insert_api_return(ApiReturn api_return) {
+    api_->insert_api_return(std::move(api_return));
+  }
+
  private:
   std::optional<Field> current_field_;
   std::string current_path_;
@@ -658,6 +662,22 @@ class RefPhaseWalker final : public ToolmanParserBaseListener,
 
   void exitPath(ToolmanParser::PathContext*) override {
     api_builder_.end_path();
+  }
+
+  void enterReturnsItem(ToolmanParser::ReturnsItemContext* node) override {
+    auto status_code = std::stoi(node->DecIntegerLiteral()->getText());
+    std::shared_ptr<Type> return_type;
+    if (nullptr == node->identifierName()) {
+      auto return_type_opt =
+          type_scope_->lookup(node->identifierName()->getText());
+      if (!return_type_opt.has_value()) {
+        push_error(CustomTypeNotFoundError(node->identifierName()->getText(),
+                                           get_stmt_info(node, source_)));
+        return;
+      }
+      return_type = return_type_opt.value();
+    }
+    api_builder_.insert_api_return(ApiReturn{status_code, return_type});
   }
 
  private:
