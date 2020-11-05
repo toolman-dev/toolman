@@ -277,12 +277,16 @@ class ApiBuilder {
   }
 
   void end_path() {
-    api_->set_path(current_path_);
+    if (api_.has_value()) {
+      api_->set_path(current_path_);
+    }
     current_path_.clear();
   }
 
   void insert_api_return(ApiReturn api_return) {
-    api_->insert_api_return(std::move(api_return));
+    if (api_.has_value()) {
+      api_->insert_api_return(std::move(api_return));
+    }
   }
 
  private:
